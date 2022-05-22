@@ -215,6 +215,8 @@ FileExtension get_file_extension_type(u8string_view path)
         return FileExtension::SV6;
     if (String::Equals(extension, ".td6", true))
         return FileExtension::TD6;
+    if (String::Equals(extension, ".td9", true))
+        return FileExtension::TD9;
     if (String::Equals(extension, ".park", true))
         return FileExtension::PARK;
     return FileExtension::Unknown;

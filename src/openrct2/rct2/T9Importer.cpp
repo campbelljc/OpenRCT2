@@ -24,32 +24,56 @@
 
 #include <mutex>
 #include <iostream>
+/*#include <boost/lexical_cast.hpp>
+
+template <typename T>
+void Convert(const std::string& source, T& target)
+{
+    target = boost::lexical_cast<T>(source);
+}
+
+template <>
+void Convert(const std::string& source, int8_t& target)
+{
+    int value = boost::lexical_cast<int>(source);
+
+    if(value < std::numeric_limits<int8_t>::min() || value > std::numeric_limits<int8_t>::max())
+    {
+        //handle error
+    }
+    else
+    {
+        target = (int8_t)value;
+    }
+}*/
 
 namespace RCT2
 {
     static std::mutex _objectLookupMutex;
 
     /**
-     * Class to import RollerCoaster Tycoon 2 track designs (*.TD6).
+     * Class to import RollerCoaster Tycoon 2 track designs (*.TD9).
      */
-    class TD6Importer final : public ITrackImporter
+    class TD9Importer final : public ITrackImporter
     {
     private:
         OpenRCT2::MemoryStream _stream;
         std::string _name;
+		std::string _path;
 
     public:
-        TD6Importer()
+        TD9Importer()
         {
         }
 
         bool Load(const utf8* path) override
         {
             const auto extension = Path::GetExtension(path);
-            if (String::Equals(extension, ".td6", true))
+            if (String::Equals(extension, ".td9", true))
             {
+				_path = path;
                 _name = GetNameFromTrackPath(path);
-                auto fs = OpenRCT2::FileStream(path, OpenRCT2::FILE_MODE_OPEN);
+                auto fs = OpenRCT2::FileStream("/Applications/Games/RollerCoaster Tycoon 2.app/Contents/Resources/drive_c/Program Files/RollerCoaster Tycoon 2/Utilities/tracksorter/Tracks/Miner's revenge.TD6", OpenRCT2::FILE_MODE_OPEN);
                 return LoadFromStream(&fs);
             }
 
@@ -78,8 +102,111 @@ namespace RCT2
             TD6Track td6{};
             // Rework td6 so that it is just the fields
             _stream.Read(&td6, 0xA3);
-
-            td->type = td6.type; // 0x00
+			
+			///new
+			
+			std::ifstream in(_path);
+			std::string str;
+			std::vector<std::string> lines;
+			while (std::getline(in, str))
+			{
+				//std::cout<<str<<"\n";
+			    if(str.size() > 0)
+			        lines.push_back(str);
+			}
+			in.close();
+			
+			short type2;
+			std::vector<short> conv_lines;
+			int k = 0;
+			for (std::string line : lines)
+			{
+				const char *c = line.c_str();
+				sscanf(c, "%hi", &type2);	
+				conv_lines.push_back(type2);	
+				k += 1;
+				//std::cout<<type2<<":"<<k<<"\n";
+				if (k == 33)
+					break;		
+			}
+			std::cout<<"T1:"<<td->type<<"\n";
+			td->type = (uint8_t)(conv_lines[0]);
+			
+			/*td->type = (uint8_t)(conv_lines[0]);
+			td->vehicle_type = (uint8_t)(conv_lines[1]);
+			td->cost = (uint8_t)(conv_lines[2]);
+			td->flags = (uint8_t)(conv_lines[3]);
+			td->ride_mode = (RideMode)(conv_lines[4]);
+			td->track_flags = (uint8_t)(conv_lines[5]);
+			td->colour_scheme = (uint8_t)(conv_lines[6]);
+			td->entrance_style = (uint8_t)(conv_lines[7]);
+			td->total_air_time = (uint8_t)(conv_lines[8]);
+			td->depart_flags = (uint8_t)(conv_lines[9]);
+			td->number_of_trains = (uint8_t)(conv_lines[10]);
+			td->number_of_cars_per_train = (uint8_t)(conv_lines[11]);
+			td->min_waiting_time = (uint8_t)(conv_lines[12]);
+			td->max_waiting_time = (uint8_t)(conv_lines[13]);
+			td->operation_setting = (uint8_t)(conv_lines[14]);
+			td->max_speed = (uint8_t)(conv_lines[15]);
+			td->average_speed = (uint8_t)(conv_lines[16]);
+			td->ride_length = (uint8_t)(conv_lines[17]);
+			td->max_positive_vertical_g = (uint8_t)(conv_lines[18]);
+			td->max_negative_vertical_g = (uint8_t)(conv_lines[19]);
+			td->max_lateral_g = (uint8_t)(conv_lines[20]);
+			//td->holes_inversions = (uint8_t)(conv_lines[21]);
+			td->drops = (uint8_t)(conv_lines[22]);
+			td->highest_drop_height = (uint8_t)(conv_lines[23]);
+			td->excitement = (uint8_t)(conv_lines[24]);
+			td->intensity = (uint8_t)(conv_lines[25]);
+			td->nausea = (uint8_t)(conv_lines[26]);
+			td->upkeep_cost = (uint8_t)(conv_lines[27]);
+			td->flags2 = (uint8_t)(conv_lines[28]);
+			rct_object_entry entry{};
+			entry.flags = (uint8_t)(conv_lines[29]);
+			td->vehicle_object = ObjectEntryDescriptor(entry);
+			td->space_required_x = 255; //(uint8_t)(conv_lines[30]);
+			td->space_required_y = 255; //(uint8_t)(conv_lines[31]);
+			td->lift_hill_speed = (uint8_t)(conv_lines[32]);
+			td->num_circuits = (uint8_t)(conv_lines[33]);*/
+			td->name = "Test";
+			
+			for (size_t j = 34; j < lines.size(); j ++)
+			{ // track elements
+				//std::cout<<"track elem " << j << "\n";				
+                rct_td46_track_element t6TrackElement{};
+				
+				// split at comma then convert to uint8_t
+				size_t pos = 0;
+				std::string token;
+				std::string s = lines[j];
+				pos = s.find(',');
+			    token = s.substr(0, pos);
+				// convert token
+				const char *c = token.c_str();
+				short type;
+				sscanf(c, "%hi", &type);	
+				t6TrackElement.type = (uint8_t)type;
+				
+				s.erase(0, pos + 1);
+				// convert s
+				const char *d = s.c_str();
+				sscanf(d, "%hi", &type);
+				t6TrackElement.flags = (uint8_t)type;	
+								
+                //_stream.SetPosition(_stream.GetPosition() - 1);
+                //_stream.Read(&t6TrackElement, sizeof(rct_td46_track_element));
+                
+				TrackDesignTrackElement trackElement{};
+                track_type_t trackType = RCT2TrackTypeToOpenRCT2(t6TrackElement.type, td->type, true);
+                if (trackType == TrackElemType::InvertedUp90ToFlatQuarterLoopAlias)
+                {
+                    trackType = TrackElemType::MultiDimInvertedUp90ToFlatQuarterLoop;
+                }
+                trackElement.type = trackType;
+                trackElement.flags = t6TrackElement.flags;
+                td->track_elements.push_back(trackElement);
+			}
+			
             td->vehicle_type = td6.vehicle_type;
 
             td->cost = 0;
@@ -134,17 +261,20 @@ namespace RCT2
             td->space_required_y = td6.space_required_y;
             td->lift_hill_speed = td6.lift_hill_speed_num_circuits & 0b00011111;
             td->num_circuits = td6.lift_hill_speed_num_circuits >> 5;
+			
+			
 
             auto version = static_cast<RCT12TrackDesignVersion>((td6.version_and_colour_scheme >> 2) & 3);
             if (version != RCT12TrackDesignVersion::TD6)
             {
+				std::cout<<"unsupp\n";
                 log_error("Unsupported track design.");
                 return nullptr;
             }
 
             td->operation_setting = std::min(td->operation_setting, GetRideTypeDescriptor(td->type).OperatingSettings.MaxValue);
 
-            if (td->type == RIDE_TYPE_MAZE)
+            /*if (td->type == RIDE_TYPE_MAZE)
             {
                 rct_td46_maze_element t6MazeElement{};
                 t6MazeElement.all = !0;
@@ -163,39 +293,40 @@ namespace RCT2
                 }
             }
             else
+            {*/
+            rct_td46_track_element t6TrackElement{};
+            for (uint8_t endFlag = _stream.ReadValue<uint8_t>(); endFlag != 0xFF; endFlag = _stream.ReadValue<uint8_t>())
             {
-                rct_td46_track_element t6TrackElement{};
-                for (uint8_t endFlag = _stream.ReadValue<uint8_t>(); endFlag != 0xFF; endFlag = _stream.ReadValue<uint8_t>())
-                {
-                    _stream.SetPosition(_stream.GetPosition() - 1);
-                    _stream.Read(&t6TrackElement, sizeof(rct_td46_track_element));
-                    TrackDesignTrackElement trackElement{};
+                _stream.SetPosition(_stream.GetPosition() - 1);
+                _stream.Read(&t6TrackElement, sizeof(rct_td46_track_element));
+                //TrackDesignTrackElement trackElement{};
 
-                    track_type_t trackType = RCT2TrackTypeToOpenRCT2(t6TrackElement.type, td->type, true);
-                    if (trackType == TrackElemType::InvertedUp90ToFlatQuarterLoopAlias)
-                    {
-                        trackType = TrackElemType::MultiDimInvertedUp90ToFlatQuarterLoop;
-                    }
+                //track_type_t trackType = RCT2TrackTypeToOpenRCT2(t6TrackElement.type, td->type, true);
+                //if (trackType == TrackElemType::InvertedUp90ToFlatQuarterLoopAlias)
+                //{
+                //    trackType = TrackElemType::MultiDimInvertedUp90ToFlatQuarterLoop;
+				//}
 
-                    trackElement.type = trackType;
-                    trackElement.flags = t6TrackElement.flags;
-                    td->track_elements.push_back(trackElement);
-                }
-
-                TD6EntranceElement t6EntranceElement{};
-                for (uint8_t endFlag = _stream.ReadValue<uint8_t>(); endFlag != 0xFF; endFlag = _stream.ReadValue<uint8_t>())
-                {
-                    _stream.SetPosition(_stream.GetPosition() - 1);
-                    _stream.Read(&t6EntranceElement, sizeof(TD6EntranceElement));
-                    TrackDesignEntranceElement entranceElement{};
-                    entranceElement.z = (t6EntranceElement.z == -128) ? -1 : t6EntranceElement.z;
-                    entranceElement.direction = t6EntranceElement.direction & 0x7F;
-                    entranceElement.x = t6EntranceElement.x;
-                    entranceElement.y = t6EntranceElement.y;
-                    entranceElement.isExit = t6EntranceElement.direction >> 7;
-                    td->entrance_elements.push_back(entranceElement);
-                }
+                //trackElement.type = trackType;
+                //trackElement.flags = t6TrackElement.flags;
+                //td->track_elements.push_back(trackElement);
             }
+			/*
+            TD6EntranceElement t6EntranceElement{};
+            for (uint8_t endFlag = _stream.ReadValue<uint8_t>(); endFlag != 0xFF; endFlag = _stream.ReadValue<uint8_t>())
+            {
+                _stream.SetPosition(_stream.GetPosition() - 1);
+                _stream.Read(&t6EntranceElement, sizeof(TD6EntranceElement));
+                TrackDesignEntranceElement entranceElement{};
+                entranceElement.z = (t6EntranceElement.z == -128) ? -1 : t6EntranceElement.z;
+                entranceElement.direction = t6EntranceElement.direction & 0x7F;
+                entranceElement.x = t6EntranceElement.x;
+                entranceElement.y = t6EntranceElement.y;
+                entranceElement.isExit = t6EntranceElement.direction >> 7;
+                td->entrance_elements.push_back(entranceElement);
+            }*/
+			
+			/*}
 
             for (uint8_t endFlag = _stream.ReadValue<uint8_t>(); endFlag != 0xFF; endFlag = _stream.ReadValue<uint8_t>())
             {
@@ -213,82 +344,12 @@ namespace RCT2
                 td->scenery_elements.push_back(std::move(sceneryElement));
             }
 
-            td->name = _name;
+            td->name = _name;*/
+
+			std::cout<<"T2:"<<td->type<<"\n";
 
             UpdateRideType(td);
-			
-			
-			// now save...
-			std::string fname = "export_" + td->name + ".td6";
-			std::cout<<fname <<"\n";
-			std::ofstream myfile;
-			myfile.open(fname);
-			
-            myfile << static_cast<short>(td->type) << "\n"; // 0x00
-            myfile << static_cast<short>(td->vehicle_type) << "\n";
-
-            myfile << static_cast<short>(td->cost) << "\n";
-            myfile << static_cast<short>(td->flags) << "\n";
-            myfile << static_cast<short>(td->ride_mode) << "\n";
-            myfile << static_cast<short>(td->track_flags) << "\n";
-            myfile << static_cast<short>(td->colour_scheme) << "\n";
-            /*for (auto i = 0 << "\n"; i < Limits::MaxTrainsPerRide << "\n"; ++i)
-            {
-                td->vehicle_colours[i] = td6.vehicle_colours[i] << "\n";
-                td->vehicle_additional_colour[i] = td6.vehicle_additional_colour[i] << "\n";
-            }*/
-            myfile << static_cast<short>(td->entrance_style) << "\n";
-            myfile << static_cast<short>(td->total_air_time) << "\n";
-            myfile << static_cast<short>(td->depart_flags) << "\n";
-            myfile << static_cast<short>(td->number_of_trains) << "\n";
-            myfile << static_cast<short>(td->number_of_cars_per_train) << "\n";
-            myfile << static_cast<short>(td->min_waiting_time) << "\n";
-            myfile << static_cast<short>(td->max_waiting_time) << "\n";
-            myfile << static_cast<short>(td->operation_setting) << "\n";
-            myfile << static_cast<short>(td->max_speed) << "\n"; // int8_t
-            myfile << static_cast<short>(td->average_speed) << "\n"; // int8_t
-            myfile << static_cast<short>(td->ride_length) << "\n";
-            myfile << static_cast<short>(td->max_positive_vertical_g) << "\n";
-            myfile << static_cast<short>(td->max_negative_vertical_g) << "\n"; // int8_t
-            myfile << static_cast<short>(td->max_lateral_g) << "\n";
-
-            if (td->type == RIDE_TYPE_MINI_GOLF)
-            {
-                myfile << static_cast<short>(td->holes) << "\n";
-            }
-            else
-            {
-                myfile << static_cast<short>(td->inversions) << "\n";
-            }
-
-            myfile << static_cast<short>(td->drops) << "\n";
-            myfile << static_cast<short>(td->highest_drop_height) << "\n";
-            myfile << static_cast<short>(td->excitement) << "\n";
-            myfile << static_cast<short>(td->intensity) << "\n";
-            myfile << static_cast<short>(td->nausea) << "\n";
-            myfile << static_cast<short>(td->upkeep_cost) << "\n";
-            /*for (auto i = 0 << "\n"; i < Limits::NumColourSchemes << "\n"; ++i)
-            {
-                td->track_spine_colour[i] = td6.track_spine_colour[i] << "\n";
-                td->track_rail_colour[i] = td6.track_rail_colour[i] << "\n";
-                td->track_support_colour[i] = td6.track_support_colour[i] << "\n";
-            }*/
-            myfile << static_cast<short>(td->flags2) << "\n";
-            //myfile << static_cast<short>(td->vehicle_object) << "\n";
-            myfile << static_cast<short>(td6.vehicle_object.flags) << "\n";
-            //myfile << td->vehicle_object << "\n";
-            myfile << static_cast<short>(td->space_required_x) << "\n";
-            myfile << static_cast<short>(td->space_required_y) << "\n";
-            myfile << static_cast<short>(td->lift_hill_speed) << "\n";
-            myfile << static_cast<short>(td->num_circuits) << "\n";
-			
-			myfile << static_cast<short>(td->track_elements.size()) << "\n";
-			for(TrackDesignTrackElement el : td->track_elements)
-			{
-				myfile << static_cast<short>(el.type) << "," << static_cast<short>(el.flags) << "\n";
-			}
-			
-			myfile.close();
+			std::cout<<"T3:"<<td->type<<"\n";
 
             return td;
         }
@@ -314,7 +375,7 @@ namespace RCT2
     };
 } // namespace RCT2
 
-std::unique_ptr<ITrackImporter> TrackImporter::CreateTD6()
+std::unique_ptr<ITrackImporter> TrackImporter::CreateTD9()
 {
-    return std::make_unique<RCT2::TD6Importer>();
+    return std::make_unique<RCT2::TD9Importer>();
 }

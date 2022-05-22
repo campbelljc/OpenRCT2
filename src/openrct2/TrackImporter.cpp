@@ -24,6 +24,10 @@ namespace TrackImporter
         {
             trackImporter = CreateTD4();
         }
+		else if (String::Equals(extension, ".td9", true))
+		{
+			trackImporter = CreateTD9();
+		}
         else
         {
             trackImporter = CreateTD6();
