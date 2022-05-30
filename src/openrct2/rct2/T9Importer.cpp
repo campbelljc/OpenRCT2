@@ -169,8 +169,18 @@ namespace RCT2
 			td->lift_hill_speed = (uint8_t)(conv_lines[32]);
 			td->num_circuits = (uint8_t)(conv_lines[33]);*/
 			td->name = "Test";
-			
+
+			int ent = 0;
 			for (size_t j = 34; j < lines.size(); j ++)
+			{
+				if (lines[j] == "ENT")
+				{
+					ent = j;
+					break;
+				}
+			}
+			
+			for (size_t j = 34; j < ent; j ++)
 			{ // track elements
 				//std::cout<<"track elem " << j << "\n";				
                 rct_td46_track_element t6TrackElement{};
@@ -204,8 +214,66 @@ namespace RCT2
                 }
                 trackElement.type = trackType;
                 trackElement.flags = t6TrackElement.flags;
-                td->track_elements.push_back(trackElement);
+                td->track_elements.push_back(trackElement);	
 			}
+			bool isExit = false;
+			for (size_t j = ent; j < lines.size(); j ++)
+			{
+				if (lines[j] == "ENT")
+					continue;
+                TrackDesignEntranceElement entranceElement{};
+                
+				size_t pos = 0;
+				std::string token;
+				std::string s = lines[j];
+				pos = s.find(',');
+			    token = s.substr(0, pos);
+				// convert token
+				const char *c = token.c_str();
+				short type;
+				sscanf(c, "%hi", &type);	
+				entranceElement.z = (uint8_t)type;
+				
+				s.erase(0, pos + 1);
+				pos = s.find(',');
+			    token = s.substr(0, pos);
+				
+				// convert s
+				const char *d = token.c_str();
+				sscanf(d, "%hi", &type);
+				entranceElement.direction = (uint8_t)type;	
+				
+				s.erase(0, pos + 1);
+				pos = s.find(',');
+			    token = s.substr(0, pos);
+				
+				// convert s
+				d = token.c_str();
+				sscanf(d, "%hi", &type);
+				entranceElement.x = (uint8_t)type;	
+				
+				s.erase(0, pos + 1);
+				//pos = s.find(',');
+			    //token = s.substr(0, pos);
+				
+				// convert s
+				d = s.c_str();
+				sscanf(d, "%hi", &type);
+				entranceElement.y = (uint8_t)type;	
+				
+				
+				
+				//entranceElement.z = (t6EntranceElement.z == -128) ? -1 : t6EntranceElement.z;
+                //entranceElement.direction = t6EntranceElement.direction & 0x7F;
+                //entranceElement.x = t6EntranceElement.x;
+                //entranceElement.y = t6EntranceElement.y;
+				
+				
+                entranceElement.isExit = isExit; // t6EntranceElement.direction >> 7;
+				isExit = !isExit;
+                td->entrance_elements.push_back(entranceElement);
+			}
+			
 			
             td->vehicle_type = td6.vehicle_type;
 

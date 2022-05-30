@@ -47,6 +47,7 @@
 #include "ride/Station.h"
 #include "ride/Track.h"
 #include "ride/TrackDesign.h"
+#include "ride/TrackDesignRepository.h"
 #include "ride/Vehicle.h"
 #include "scenario/Scenario.h"
 #include "scripting/ScriptEngine.h"
@@ -74,7 +75,7 @@
 
 uint16_t gCurrentDeltaTime;
 uint8_t gGamePaused = 0;
-int32_t gGameSpeed = 1;
+int32_t gGameSpeed = 8;
 bool gDoSingleUpdate = false;
 float gDayNightCycle = 0;
 bool gInUpdateCode = false;
@@ -97,7 +98,7 @@ using namespace OpenRCT2;
 
 void game_reset_speed()
 {
-    gGameSpeed = 1;
+    gGameSpeed = 8;
     window_invalidate_by_class(WC_TOP_TOOLBAR);
 }
 
@@ -500,7 +501,8 @@ void game_load_init()
     }
 
     OpenRCT2::Audio::StopTitleMusic();
-    gGameSpeed = 1;
+    gGameSpeed = 8;
+	track_repository_scan();
 }
 
 void game_load_scripts()

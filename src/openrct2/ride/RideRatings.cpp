@@ -26,6 +26,8 @@
 
 #include <algorithm>
 #include <iterator>
+#include <iostream>
+#include <fstream>
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Scripting;
@@ -739,6 +741,13 @@ static void ride_ratings_calculate(RideRatingUpdateState& state, Ride* ride)
         ride->ratings.nausea = max(0, ride->ratings.nausea);
     }
 #endif
+	
+	//std::cout<<"excite:"<<ride->ratings.Excitement<<"\n";
+    std::ofstream myfile;
+    myfile.open ("excitement.txt");
+    myfile << ride->ratings.Excitement;
+    myfile.close();
+	
 
 #ifdef ENABLE_SCRIPTING
     auto& hookEngine = GetContext()->GetScriptEngine().GetHookEngine();

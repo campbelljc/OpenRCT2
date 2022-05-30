@@ -2363,8 +2363,10 @@ void Vehicle::UpdateWaitingToDepart()
 {
     auto* curRide = GetRide();
     if (curRide == nullptr)
+	{
+		std::cout<<"D1\n";
         return;
-
+	}
     const auto& currentStation = curRide->GetStation(current_station);
 
     bool shouldBreak = false;
@@ -2401,6 +2403,7 @@ void Vehicle::UpdateWaitingToDepart()
                 if (!currentStation.Exit.IsNull())
                 {
                     SetState(Vehicle::Status::UnloadingPassengers);
+					std::cout<<"D2\n";
                     return;
                 }
             }
@@ -2415,6 +2418,7 @@ void Vehicle::UpdateWaitingToDepart()
                     if (!currentStation.Exit.IsNull())
                     {
                         SetState(Vehicle::Status::UnloadingPassengers);
+						std::cout<<"D3\n";
                         return;
                     }
                     break;
@@ -2426,7 +2430,10 @@ void Vehicle::UpdateWaitingToDepart()
     if (!skipCheck)
     {
         if (!(currentStation.Depart & STATION_DEPART_FLAG))
-            return;
+		{
+			//std::cout<<"D4:"<<currentStation.Depart<<"\n";
+            //return;
+		}
     }
 
     if (curRide->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_CAN_SYNCHRONISE_ADJACENT_STATIONS))
@@ -2437,12 +2444,14 @@ void Vehicle::UpdateWaitingToDepart()
             {
                 if (!CanDepartSynchronised())
                 {
+					//std::cout<<"D5\n";
                     return;
                 }
             }
         }
     }
 
+	//std::cout<<"departing\n";
     SetState(Vehicle::Status::Departing);
 
     if (curRide->lifecycle_flags & RIDE_LIFECYCLE_CABLE_LIFT)

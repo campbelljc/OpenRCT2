@@ -1718,12 +1718,13 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                 rotation = (rotation + entrance.direction) & 3;
                 if (tds.PlaceOperation != PTD_OPERATION_PLACE_QUERY)
                 {
-                    auto tile = CoordsXY{ newCoords } + CoordsDirectionDelta[rotation];
+                    auto tile = CoordsXY{ origin }; //; CoordsXY{ newCoords } + CoordsDirectionDelta[rotation];
                     TileElement* tile_element = map_get_first_element_at(tile);
                     newCoords.z = tds.Origin.z / COORDS_Z_STEP;
                     newCoords.z += entrance.z;
                     if (tile_element == nullptr)
                     {
+						std::cout<<"1727\n";
                         return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
                     }
 
@@ -1731,10 +1732,12 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                     {
                         if (tile_element->GetType() != TileElementType::Track)
                         {
+							std::cout<<"1735\n";
                             continue;
                         }
                         if (tile_element->base_height != newCoords.z)
                         {
+							std::cout<<"1740\n";
                             continue;
                         }
 
@@ -1767,6 +1770,7 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
 
                         if (res.Error != GameActions::Status::Ok)
                         {
+							std::cout<<"1773\n";
                             return res;
                         }
                         totalCost += res.Cost;
@@ -1783,6 +1787,7 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                     auto res = RideEntranceExitPlaceAction::TrackPlaceQuery(newCoords, false);
                     if (res.Error != GameActions::Status::Ok)
                     {
+						std::cout<<"1790\n";
                         return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
                     }
 

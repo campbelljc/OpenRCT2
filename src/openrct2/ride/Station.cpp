@@ -164,6 +164,7 @@ static void ride_update_station_normal(Ride* ride, StationIndex stationIndex)
     {
         if (time == 0)
         {
+			//std::cout<<"ST"<<stationIndex.ToUnderlying()<<"dept"<<station.Depart<<"\n";
             station.Depart |= STATION_DEPART_FLAG;
             ride_invalidate_station_start(ride, stationIndex, true);
         }

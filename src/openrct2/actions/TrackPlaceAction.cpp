@@ -107,6 +107,7 @@ GameActions::Result TrackPlaceAction::Query() const
     res.Position.x = _origin.x + 16;
     res.Position.y = _origin.y + 16;
     res.Position.z = _origin.z;
+	//std::cout<<_origin.x<<","<<_origin.y<<","<<_origin.z<<"\n";
 
     auto resultData = TrackPlaceActionResult{};
 
@@ -173,6 +174,10 @@ GameActions::Result TrackPlaceAction::Query() const
 
         if (!LocationValid(tileCoords) || (!map_is_location_owned(tileCoords) && !gCheatsSandboxMode))
         {
+			if (!LocationValid(tileCoords))
+				std::cout<<"invalid loc\n";
+			else
+				std::cout<<"other reason\n";
             return GameActions::Result(
                 GameActions::Status::Disallowed, STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE, STR_LAND_NOT_OWNED_BY_PARK);
         }

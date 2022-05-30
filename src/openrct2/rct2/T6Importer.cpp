@@ -287,6 +287,11 @@ namespace RCT2
 			{
 				myfile << static_cast<short>(el.type) << "," << static_cast<short>(el.flags) << "\n";
 			}
+			myfile << "ENT\n";
+			for(TrackDesignEntranceElement el : td->entrance_elements)
+			{
+				myfile<< static_cast<short>(el.z) <<","<<static_cast<short>(el.direction)<<","<<static_cast<short>(el.x)<<","<<static_cast<short>(el.y) << "\n";
+			}
 			
 			myfile.close();
 

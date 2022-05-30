@@ -20,9 +20,11 @@
 #include "../actions/ParkSetParameterAction.h"
 #include "../actions/RideSetPriceAction.h"
 #include "../actions/RideSetSettingAction.h"
+#include "../actions/RideSetStatusAction.h"
 #include "../actions/ScenarioSetSettingAction.h"
 #include "../actions/SetCheatAction.h"
 #include "../actions/StaffSetCostumeAction.h"
+#include "../actions/TrackDesignAction.h"
 #include "../config/Config.h"
 #include "../core/Console.hpp"
 #include "../core/Guard.hpp"
@@ -51,6 +53,7 @@
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"
 #include "../ride/Vehicle.h"
+#include "../ride/TrackDesignRepository.h"
 #include "../util/Util.h"
 #include "../windows/Intent.h"
 #include "../world/Climate.h"
@@ -1898,6 +1901,142 @@ static int32_t cc_profiler_stop([[maybe_unused]] InteractiveConsole& console, [[
     return 0;
 }
 
+static int32_t cc_track_refresh([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
+{
+	track_repository_scan();	
+}
+
+static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
+{
+	/* WORK HERE */
+	track_repository_scan();
+	// place the first track...
+    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport("/Applications/Games/RollerCoaster Tycoon 2.app/Contents/Resources/drive_c/Program Files/RollerCoaster Tycoon 2/Tracks/X.td9");
+	
+	
+	//ScreenCoordsXY screenCoords = ScreenCoordsXY(0, 0);
+    // Try increasing Z until a feasible placement is found
+	//const CoordsXY mapCoords = CoordsXY(100, 100); //ViewportInteractionGetTileStartAtCursor(screenCoords);
+	
+    //int16_t mapZ = GetBaseZ(mapCoords);
+	
+    //if (surfaceElement == nullptr)
+	//     return 0;
+	RideId _rideIndex{ RideId::GetNull() };
+
+	
+    //auto res = FindValidTrackDesignPlaceHeight(trackLoc);
+	auto _currentTrackPieceDirection = static_cast<Direction>(0);
+	
+	std::array<CoordsXY, 5> possibleCoords = {
+		CoordsXY(4220, 1350),
+		CoordsXY(0, 0),
+		CoordsXY(150, 150),
+		CoordsXY(200, 200),
+		CoordsXY(350, 350)
+	};
+	
+	CoordsXYZ trackLoc;
+	GameActions::Result res;
+	bool found2 = false;
+	for (auto &mapCoords : possibleCoords)
+	{
+	    auto surfaceElement = map_get_surface_element_at(mapCoords);
+	    auto mapZ = surfaceElement->GetBaseZ() + TrackDesignGetZPlacement(_trackDesign.get(), GetOrAllocateRide(_rideIndex), { mapCoords, surfaceElement->GetBaseZ() });
+		std::cout<<"mapz:"<<mapZ<<"\n";
+		
+	    trackLoc = { mapCoords, mapZ };
+		bool found = false;
+	    for (int32_t i2 = 0; i2 < 7; i2++, trackLoc.z += 8)
+	    {
+	        auto tdAction = TrackDesignAction(CoordsXYZD{ trackLoc.x, trackLoc.y, trackLoc.z, _currentTrackPieceDirection }, *_trackDesign);
+	        tdAction.SetFlags(0);
+	        res = GameActions::Query(&tdAction);
+
+	        // If successful don't keep trying.
+	        // If failure due to no money then increasing height only makes problem worse
+	        if (res.Error != GameActions::Status::Ok) // || res.Error == GameActions::Status::InsufficientFunds)
+	        {
+				std::cout<<"ERR1\n" << res.GetErrorMessage()<<"\n";
+	        }
+			else
+			{
+				found = true;
+				break;
+			}
+	    }
+		if (found)
+		{
+			found2 = true;
+			break;
+		}
+	}
+	
+	if (!found2)
+	{
+		std::cout<<"stopping\n";
+		return 1;
+	}
+
+	
+    //if (res.Error == GameActions::Status::Ok)
+    //{
+		
+    auto tdAction = TrackDesignAction({ trackLoc, _currentTrackPieceDirection }, *_trackDesign);
+    tdAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+        if (result->Error == GameActions::Status::Ok)
+        {
+            auto rideId = result->GetData<RideId>();
+            auto getRide = get_ride(rideId);
+            if (getRide != nullptr)
+            {
+                //window_close_by_class(WC_ERROR);
+                //OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::PlaceItem, trackLoc);
+
+                //_currentRideIndex = rideId;
+                //if (track_design_are_entrance_and_exit_placed())
+                //{
+                auto intent = Intent(WC_RIDE);
+                intent.putExtra(INTENT_EXTRA_RIDE_ID, rideId.ToUnderlying());
+                context_open_intent(&intent);
+                //auto wnd = window_find_by_class(WC_TRACK_DESIGN_PLACE);
+                //window_close(wnd);
+				
+			    RideSetStatusAction gameAction = RideSetStatusAction(rideId, RideStatus::Open);
+				/*gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+			        //if (result->Error == GameActions::Status::Ok)
+			        //{
+					//}
+				});*/
+			    GameActions::ExecuteNested(&gameAction);
+				//while (getRide->ratings.Excitement == -1) { }
+				//std::cout<<"\nExcitement:"<<getRide->ratings.Excitement<<"\n";
+				
+				//}
+                //else
+                //{
+                //    ride_initialise_construction_window(getRide);
+                //    auto wnd = window_find_by_class(WC_RIDE_CONSTRUCTION);
+                //    window_event_mouse_up_call(wnd, WC_RIDE_CONSTRUCTION__WIDX_ENTRANCE);
+                //}
+            }
+        }
+        else
+        {
+			std::cout<<"ERR2\n";
+		    //OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::Error, result->Position);
+		}
+    });
+    GameActions::Execute(&tdAction);
+    //return;
+    //}
+	//else
+	//{
+	//	std::cout<<"ERR3\n";
+	//}
+	
+}
+
 using console_command_func = int32_t (*)(InteractiveConsole& console, const arguments_t& argv);
 struct console_command
 {
@@ -1944,7 +2083,7 @@ static constexpr const utf8* console_variable_table[] = {
     "cheat_sandbox_mode",
     "cheat_disable_clearance_checks",
     "cheat_disable_support_limits",
-    "current_rotation",
+    "current_rotation"
 };
 
 static constexpr const utf8* console_window_table[] = {
@@ -2006,6 +2145,8 @@ static constexpr const console_command console_command_table[] = {
     { "profiler_start", cc_profiler_start, "Starts the profiler.", "profiler_start" },
     { "profiler_stop", cc_profiler_stop, "Stops the profiler.", "profiler_stop [<output file>]" },
     { "profiler_exportcsv", cc_profiler_exportcsv, "Exports the current profiler data.", "profiler_exportcsv <output file>" },
+	{ "track", cc_track_excite, "Excite1", "excite2"},
+	{ "tref", cc_track_refresh, "Refresh track repo", "refr1"},
 };
 
 static int32_t cc_windows(InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)

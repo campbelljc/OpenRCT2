@@ -3464,6 +3464,7 @@ bool Ride::CreateVehicles(const CoordsXYE& element, bool isApplying)
     UpdateMaxVehicles();
     if (subtype == OBJECT_ENTRY_INDEX_NULL)
     {
+		std::cout<<"cv1\n";
         return true;
     }
 
@@ -3471,12 +3472,14 @@ bool Ride::CreateVehicles(const CoordsXYE& element, bool isApplying)
     int32_t totalCars = num_vehicles * num_cars_per_train;
     if (totalCars > count_free_misc_sprite_slots())
     {
+		std::cout<<"cv2\n";
         gGameCommandErrorText = STR_UNABLE_TO_CREATE_ENOUGH_VEHICLES;
         return false;
     }
 
     if (!isApplying)
     {
+		std::cout<<"cv3\n";
         return true;
     }
 
@@ -3500,6 +3503,7 @@ bool Ride::CreateVehicles(const CoordsXYE& element, bool isApplying)
         lifecycle_flags |= RIDE_LIFECYCLE_ON_TRACK;
         RemoveVehicles();
         gGameCommandErrorText = STR_UNABLE_TO_CREATE_ENOUGH_VEHICLES;
+		std::cout<<"cv4\n";
         return false;
     }
     // return true;
@@ -3509,6 +3513,7 @@ bool Ride::CreateVehicles(const CoordsXYE& element, bool isApplying)
     lifecycle_flags |= RIDE_LIFECYCLE_ON_TRACK;
     for (int32_t i = 0; i < OpenRCT2::Limits::MaxStationsPerRide; i++)
     {
+		//std::cout<<"set dept"<<i<<"\n";
         stations[i].Depart = (stations[i].Depart & STATION_DEPART_FLAG) | 1;
     }
 
