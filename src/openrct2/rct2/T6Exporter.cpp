@@ -25,6 +25,7 @@
 #include "../windows/Intent.h"
 
 #include <functional>
+#include <iostream>
 
 namespace RCT2
 {
@@ -49,6 +50,7 @@ namespace RCT2
 
     bool T6Exporter::SaveTrack(OpenRCT2::IStream* stream)
     {
+		/*
         OpenRCT2::MemoryStream tempStream;
         tempStream.WriteValue<uint8_t>(OpenRCT2RideTypeToRCT2RideType(_trackDesign->type));
         tempStream.WriteValue<uint8_t>(_trackDesign->vehicle_type);
@@ -139,6 +141,88 @@ namespace RCT2
 
         SawyerChunkWriter sawyerCoding(stream);
         sawyerCoding.WriteChunkTrack(tempStream.GetData(), tempStream.GetLength());
+		*/
+		
+		
+		
+		// now save...
+		std::string fname = "exportX.td9";
+		std::cout<<fname <<"\n";
+		std::ofstream myfile;
+		myfile.open(fname);
+		
+        myfile << static_cast<short>(_trackDesign->type) << "\n"; // 0x00
+        myfile << static_cast<short>(_trackDesign->vehicle_type) << "\n";
+
+        myfile << static_cast<short>(_trackDesign->cost) << "\n";
+        myfile << static_cast<short>(_trackDesign->flags) << "\n";
+        myfile << static_cast<short>(_trackDesign->ride_mode) << "\n";
+        myfile << static_cast<short>(_trackDesign->track_flags) << "\n";
+        myfile << static_cast<short>(_trackDesign->colour_scheme) << "\n";
+        /*for (auto i = 0 << "\n"; i < Limits::MaxTrainsPerRide << "\n"; ++i)
+        {
+            _trackDesign->vehicle_colours[i] = td6.vehicle_colours[i] << "\n";
+            _trackDesign->vehicle_additional_colour[i] = td6.vehicle_additional_colour[i] << "\n";
+        }*/
+        myfile << static_cast<short>(_trackDesign->entrance_style) << "\n";
+        myfile << static_cast<short>(_trackDesign->total_air_time) << "\n";
+        myfile << static_cast<short>(_trackDesign->depart_flags) << "\n";
+        myfile << static_cast<short>(_trackDesign->number_of_trains) << "\n";
+        myfile << static_cast<short>(_trackDesign->number_of_cars_per_train) << "\n";
+        myfile << static_cast<short>(_trackDesign->min_waiting_time) << "\n";
+        myfile << static_cast<short>(_trackDesign->max_waiting_time) << "\n";
+        myfile << static_cast<short>(_trackDesign->operation_setting) << "\n";
+        myfile << static_cast<short>(_trackDesign->max_speed) << "\n"; // int8_t
+        myfile << static_cast<short>(_trackDesign->average_speed) << "\n"; // int8_t
+        myfile << static_cast<short>(_trackDesign->ride_length) << "\n";
+        myfile << static_cast<short>(_trackDesign->max_positive_vertical_g) << "\n";
+        myfile << static_cast<short>(_trackDesign->max_negative_vertical_g) << "\n"; // int8_t
+        myfile << static_cast<short>(_trackDesign->max_lateral_g) << "\n";
+
+        if (_trackDesign->type == RIDE_TYPE_MINI_GOLF)
+        {
+            myfile << static_cast<short>(_trackDesign->holes) << "\n";
+        }
+        else
+        {
+            myfile << static_cast<short>(_trackDesign->inversions) << "\n";
+        }
+
+        myfile << static_cast<short>(_trackDesign->drops) << "\n";
+        myfile << static_cast<short>(_trackDesign->highest_drop_height) << "\n";
+        myfile << static_cast<short>(_trackDesign->excitement) << "\n";
+        myfile << static_cast<short>(_trackDesign->intensity) << "\n";
+        myfile << static_cast<short>(_trackDesign->nausea) << "\n";
+        myfile << static_cast<short>(_trackDesign->upkeep_cost) << "\n";
+        /*for (auto i = 0 << "\n"; i < Limits::NumColourSchemes << "\n"; ++i)
+        {
+            _trackDesign->track_spine_colour[i] = td6.track_spine_colour[i] << "\n";
+            _trackDesign->track_rail_colour[i] = td6.track_rail_colour[i] << "\n";
+            _trackDesign->track_support_colour[i] = td6.track_support_colour[i] << "\n";
+        }*/
+        myfile << static_cast<short>(_trackDesign->flags2) << "\n";
+        //myfile << static_cast<short>(_trackDesign->vehicle_object) << "\n";
+        myfile << static_cast<short>(0) << "\n"; //_trackDesign->vehicle_object.flags) << "\n";
+        //myfile << _trackDesign->vehicle_object << "\n";
+        myfile << static_cast<short>(_trackDesign->space_required_x) << "\n";
+        myfile << static_cast<short>(_trackDesign->space_required_y) << "\n";
+        myfile << static_cast<short>(_trackDesign->lift_hill_speed) << "\n";
+        myfile << static_cast<short>(_trackDesign->num_circuits) << "\n";
+		
+		myfile << static_cast<short>(_trackDesign->track_elements.size()) << "\n";
+		for(TrackDesignTrackElement el : _trackDesign->track_elements)
+		{
+			myfile << static_cast<short>(el.type) << "," << static_cast<short>(el.flags) << "\n";
+		}
+		myfile << "ENT\n";
+		for(TrackDesignEntranceElement el : _trackDesign->entrance_elements)
+		{
+			myfile<< static_cast<short>(el.z) <<","<<static_cast<short>(el.direction)<<","<<static_cast<short>(el.x)<<","<<static_cast<short>(el.y) << "\n";
+		}
+		
+		myfile.close();
+		
+		
         return true;
     }
 } // namespace RCT2

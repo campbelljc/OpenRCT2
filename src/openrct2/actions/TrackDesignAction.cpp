@@ -92,7 +92,7 @@ GameActions::Result TrackDesignAction::Query() const
         return GameActions::Result(GameActions::Status::Unknown, STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE, STR_NONE);
     }
 
-    bool placeScenery = true;
+    bool placeScenery = false;// true;
 
     uint32_t flags = 0;
     if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
@@ -165,7 +165,7 @@ GameActions::Result TrackDesignAction::Execute() const
     }
 
     // Query first, this is required again to determine if scenery is available.
-    bool placeScenery = true;
+    bool placeScenery = false; // true;
 
     uint32_t flags = 0;
     if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
@@ -190,6 +190,7 @@ GameActions::Result TrackDesignAction::Execute() const
         res.ErrorTitle = STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE;
         res.ErrorMessage = queryRes.ErrorMessage;
         res.ErrorMessageArgs = queryRes.ErrorMessageArgs;
+		std::cout<<"Q err\n";
 
         return res;
     }
@@ -208,7 +209,7 @@ GameActions::Result TrackDesignAction::Execute() const
         res.ErrorTitle = STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE;
         res.ErrorMessage = execRes.ErrorMessage;
         res.ErrorMessageArgs = execRes.ErrorMessageArgs;
-
+		std::cout<<"Pl err\n";
         return res;
     }
 

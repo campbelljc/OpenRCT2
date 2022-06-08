@@ -44,6 +44,7 @@
 #include "../paint/VirtualFloor.h"
 #include "../profiling/Profiling.h"
 #include "../rct1/RCT1.h"
+#include "../rct2/T6Exporter.h"
 #include "../scenario/Scenario.h"
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
@@ -963,12 +964,14 @@ std::unique_ptr<TrackDesign> Ride::SaveToTrackDesign(TrackDesignState& tds) cons
 {
     if (!(lifecycle_flags & RIDE_LIFECYCLE_TESTED))
     {
+		std::cout<<"E1\n";
         context_show_error(STR_CANT_SAVE_TRACK_DESIGN, STR_NONE, {});
         return nullptr;
     }
 
     if (!ride_has_ratings(this))
     {
+		std::cout<<"E2\n";
         context_show_error(STR_CANT_SAVE_TRACK_DESIGN, STR_NONE, {});
         return nullptr;
     }
@@ -977,6 +980,7 @@ std::unique_ptr<TrackDesign> Ride::SaveToTrackDesign(TrackDesignState& tds) cons
     auto errMessage = td->CreateTrackDesign(tds, *this);
     if (errMessage != STR_NONE)
     {
+		std::cout<<"E3:"<<errMessage<<"\n";
         context_show_error(STR_CANT_SAVE_TRACK_DESIGN, errMessage, {});
         return nullptr;
     }
@@ -2013,8 +2017,9 @@ void ride_measurements_update()
     PROFILED_FUNCTION();
 
     if (gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR)
+	{
         return;
-
+	}
     // For each ride measurement
     for (auto& ride : GetRideManager())
     {
@@ -2047,7 +2052,7 @@ void ride_measurements_update()
                     }
                 }
             }
-        }
+		}
     }
 }
 
@@ -3479,7 +3484,7 @@ bool Ride::CreateVehicles(const CoordsXYE& element, bool isApplying)
 
     if (!isApplying)
     {
-		std::cout<<"cv3\n";
+		//std::cout<<"cv3\n";
         return true;
     }
 

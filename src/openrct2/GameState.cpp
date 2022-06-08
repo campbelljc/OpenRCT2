@@ -1,3 +1,11 @@
+#define ZMQ_BUILD_DRAFT_API
+#include <zmq.hpp>
+
+#include "ride/TrackDesignRepository.h"
+#include "actions/TrackDesignAction.h"
+#include "actions/RideSetStatusAction.h"
+#include "actions/RideDemolishAction.h"
+
 /*****************************************************************************
  * Copyright (c) 2014-2020 OpenRCT2 developers
  *
@@ -46,6 +54,14 @@
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Scripting;
+using namespace std::chrono_literals;
+
+// initialize the zmq context with a single IO thread
+zmq::context_t context_gs{1};
+
+// construct a REP (reply) socket and bind to interface
+zmq::socket_t socket_gs{context_gs, zmq::socket_type::server};
+bool firstRun = true;
 
 GameState::GameState()
 {
@@ -92,6 +108,12 @@ void GameState::InitAll(const TileCoordsXY& mapSize)
     auto& scriptEngine = GetContext()->GetScriptEngine();
     scriptEngine.ClearParkStorage();
 #endif
+	if (firstRun) //socket_gs.handle() == nullptr)
+	{
+		firstRun = false;
+		std::cout<<"GS BIND\n";
+	    socket_gs.bind("tcp://*:5555");		
+	}
 }
 
 /**
@@ -250,8 +272,165 @@ void GameState::Tick()
     gInUpdateCode = false;
 }
 
+
+std::array<CoordsXY, 6> possibleCoords = {
+	CoordsXY(6320, 6832),
+	CoordsXY(4220, 1350),
+	CoordsXY(0, 0),
+	CoordsXY(150, 150),
+	CoordsXY(200, 200),
+	CoordsXY(350, 350)
+};
+
+RideId createdRideID = RideId::GetNull();
 void GameState::UpdateLogic(LogicTimings* timings)
 {
+    zmq::message_t request;
+	
+    //const CoordsXY mapCoords = ViewportInteractionGetTileStartAtCursor(screenCoords);
+	//std::cout<<mapCoords.x<<","<<mapCoords.y<<"\n";
+	
+
+    // receive a request from client
+    auto num = socket_gs.recv(request, zmq::recv_flags::dontwait);
+	if (num > 0)
+	{
+		std::string path = request.to_string();
+		const char* path_c = path.c_str();
+	    //std::cout << "Received " << path_c << std::endl;
+		
+		window_close_all();
+		
+        //for (auto& ride : GetRideManager())
+		if (!(createdRideID.IsNull()))
+        {
+			auto ride = get_ride(createdRideID);
+			std::cout<<"R1\n";
+			createdRideID = RideId::GetNull();
+			
+		    // close first...
+			auto gameAction1 = RideSetStatusAction(ride->id, RideStatus::Closed);
+		    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+		    //});
+		    gameAction1.SetFlags(GAME_COMMAND_FLAG_APPLY);
+			
+		    GameActions::ExecuteNested(&gameAction1);
+			std::cout<<"R2\n";
+		    if (!(ride->lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK))
+			{
+				ride->lifecycle_flags &= RIDE_LIFECYCLE_ON_TRACK;
+			}
+		    ride_clear_for_construction(ride);
+			
+			auto gameAction2 = RideDemolishAction(ride->id, RIDE_MODIFY_DEMOLISH);
+		    gameAction2.SetFlags(GAME_COMMAND_FLAG_APPLY);
+		    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+			std::cout<<"R3\n";
+			//});				
+		    GameActions::ExecuteNested(&gameAction2);
+			
+			//ride_action_modify(&ride, RIDE_MODIFY_DEMOLISH, GAME_COMMAND_FLAG_APPLY);
+        }
+		
+	    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport(path_c);
+		if (_trackDesign != nullptr)
+		{
+			_trackDesign->name = "Test";
+	
+			RideId _rideIndex{ RideId::GetNull() };
+		
+			auto _currentTrackPieceDirection = static_cast<Direction>(0);
+
+	
+			CoordsXYZ trackLoc;
+			GameActions::Result res;
+			bool found2 = false;
+			for (auto &mapCoords : possibleCoords)
+			{
+			    auto surfaceElement = map_get_surface_element_at(mapCoords);
+			    auto mapZ = surfaceElement->GetBaseZ() + TrackDesignGetZPlacement(_trackDesign.get(), GetOrAllocateRide(_rideIndex), { mapCoords, surfaceElement->GetBaseZ() });
+				//std::cout<<"mapz:"<<mapZ<<"\n";
+		
+			    trackLoc = { mapCoords, mapZ };
+				bool found = false;
+			    for (int32_t i2 = 0; i2 < 7; i2++, trackLoc.z += 8)
+			    {
+			        auto tdAction = TrackDesignAction(CoordsXYZD{ trackLoc.x, trackLoc.y, trackLoc.z, _currentTrackPieceDirection }, *_trackDesign);
+			        tdAction.SetFlags(0);
+			        res = GameActions::Query(&tdAction);
+
+			        // If successful don't keep trying.
+			        // If failure due to no money then increasing height only makes problem worse
+			        if (res.Error != GameActions::Status::Ok) // || res.Error == GameActions::Status::InsufficientFunds)
+			        {
+						std::cout<<"ERR1\n" << res.GetErrorMessage()<<"\n";
+			        }
+					else
+					{
+						found = true;
+						break;
+					}
+			    }
+				if (found)
+				{
+					found2 = true;
+					break;
+				}
+			}
+	
+			if (!found2)
+			{
+				std::cout<<"stopping\n";
+				return;
+			}
+			std::cout<<"Placing\n";
+		    auto tdAction = TrackDesignAction({ trackLoc, _currentTrackPieceDirection }, *_trackDesign);
+		    tdAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+		        if (result->Error == GameActions::Status::Ok)
+		        {
+		            auto rideId = result->GetData<RideId>();
+		            auto getRide = get_ride(rideId);
+					createdRideID = rideId;
+		            if (getRide != nullptr)
+		            {
+		                //auto intent = Intent(WC_RIDE);
+		                //intent.putExtra(INTENT_EXTRA_RIDE_ID, rideId.ToUnderlying());
+		                //context_open_intent(&intent);
+				
+					    RideSetStatusAction gameAction = RideSetStatusAction(rideId, RideStatus::Open);
+						gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+							std::cout<<"CALLBACK\n";
+						});
+					    GameActions::ExecuteNested(&gameAction);
+		            }
+		        }
+		        else
+		        {
+					std::cout<<"ERR2\n";
+				}
+		    });
+		    res = GameActions::Execute(&tdAction);
+		
+		    // send the reply to the client
+			//std::cout << "Sending back.\n";
+		    //socket.send(zmq::buffer(data), zmq::send_flags::none);
+		}
+	}
+	else
+	{
+		if (!(createdRideID.IsNull()))
+        {
+			auto ride = get_ride(createdRideID);
+			if (ride->custom_name == "Test done")
+			{
+				auto gameAction1 = RideSetStatusAction(ride->id, RideStatus::Closed);
+			    gameAction1.SetFlags(GAME_COMMAND_FLAG_APPLY);			
+			    GameActions::ExecuteNested(&gameAction1);
+			}
+		}
+	}
+	
+	
     PROFILED_FUNCTION();
 
     auto start_time = std::chrono::high_resolution_clock::now();

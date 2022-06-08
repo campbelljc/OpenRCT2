@@ -1551,6 +1551,7 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
     auto newCoords = origin;
     for (const auto& track : td6->track_elements)
     {
+		//std::cout<<newCoords.x<<","<<newCoords.y<<"\n";
         auto trackType = track.type;
         const auto& ted = GetTrackElementDescriptor(trackType);
 
@@ -1718,6 +1719,7 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                 rotation = (rotation + entrance.direction) & 3;
                 if (tds.PlaceOperation != PTD_OPERATION_PLACE_QUERY)
                 {
+                    //auto tile = CoordsXY{ newCoords } + CoordsDirectionDelta[rotation];
                     auto tile = CoordsXY{ origin }; //; CoordsXY{ newCoords } + CoordsDirectionDelta[rotation];
                     TileElement* tile_element = map_get_first_element_at(tile);
                     newCoords.z = tds.Origin.z / COORDS_Z_STEP;
@@ -1732,12 +1734,12 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                     {
                         if (tile_element->GetType() != TileElementType::Track)
                         {
-							std::cout<<"1735\n";
+							//std::cout<<"1735\n";
                             continue;
                         }
                         if (tile_element->base_height != newCoords.z)
                         {
-							std::cout<<"1740\n";
+							//std::cout<<"1740\n";
                             continue;
                         }
 

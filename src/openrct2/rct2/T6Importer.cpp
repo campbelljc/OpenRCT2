@@ -25,6 +25,7 @@
 #include <mutex>
 #include <iostream>
 
+uint8_t firstDepartFlag = 0;
 namespace RCT2
 {
     static std::mutex _objectLookupMutex;
@@ -94,7 +95,12 @@ namespace RCT2
             }
             td->entrance_style = td6.entrance_style;
             td->total_air_time = td6.total_air_time;
-            td->depart_flags = td6.depart_flags;
+			if (firstDepartFlag == 0)
+			{
+				firstDepartFlag = td6.depart_flags;
+			}
+            td->depart_flags = firstDepartFlag;
+			//std::cout<<"Depart flags:" << td->depart_flags<<"\n";
             td->number_of_trains = td6.number_of_trains;
             td->number_of_cars_per_train = td6.number_of_cars_per_train;
             td->min_waiting_time = td6.min_waiting_time;

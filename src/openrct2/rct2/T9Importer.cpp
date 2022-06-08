@@ -24,6 +24,25 @@
 
 #include <mutex>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <iterator>
+
+template <typename Out>
+void split(const std::string &s, char delim, Out result) {
+    std::istringstream iss(s);
+    std::string item;
+    while (std::getline(iss, item, delim)) {
+        *result++ = item;
+    }
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
+}
 /*#include <boost/lexical_cast.hpp>
 
 template <typename T>
@@ -129,7 +148,7 @@ namespace RCT2
 				if (k == 33)
 					break;		
 			}
-			std::cout<<"T1:"<<td->type<<"\n";
+			//std::cout<<"T1:"<<td->type<<"\n";
 			td->type = (uint8_t)(conv_lines[0]);
 			
 			/*td->type = (uint8_t)(conv_lines[0]);
@@ -190,6 +209,11 @@ namespace RCT2
 				std::string token;
 				std::string s = lines[j];
 				pos = s.find(',');
+				if (pos == std::string::npos)
+				{
+					//assert(false);
+					continue;
+				}
 			    token = s.substr(0, pos);
 				// convert token
 				const char *c = token.c_str();
@@ -223,45 +247,59 @@ namespace RCT2
 					continue;
                 TrackDesignEntranceElement entranceElement{};
                 
-				size_t pos = 0;
-				std::string token;
-				std::string s = lines[j];
-				pos = s.find(',');
-			    token = s.substr(0, pos);
+				std::vector<std::string> vals = split(lines[j], ',');
+				//std::cout<<"val0:"<<vals[0]<<"\n";
+				
+				//size_t pos = 0;
+				//std::string token;
+				//std::string s = lines[j];
+				//pos = s.find(',');
+			    //token = s.substr(0, pos);
 				// convert token
-				const char *c = token.c_str();
-				short type;
-				sscanf(c, "%hi", &type);	
+				const char *c = vals[0].c_str();
+				signed char type;
+				sscanf(c, "%hhi", &type);	
+				
+				//entranceElement.z = (int8_t)type;
 				entranceElement.z = (uint8_t)type;
+				//entranceElement.z = (entranceElement.z == -128) ? -1 : entranceElement.z;
 				
-				s.erase(0, pos + 1);
-				pos = s.find(',');
-			    token = s.substr(0, pos);
-				
-				// convert s
-				const char *d = token.c_str();
-				sscanf(d, "%hi", &type);
-				entranceElement.direction = (uint8_t)type;	
-				
-				s.erase(0, pos + 1);
-				pos = s.find(',');
-			    token = s.substr(0, pos);
-				
-				// convert s
-				d = token.c_str();
-				sscanf(d, "%hi", &type);
-				entranceElement.x = (uint8_t)type;	
-				
-				s.erase(0, pos + 1);
+				//s.erase(0, pos + 1);
 				//pos = s.find(',');
 			    //token = s.substr(0, pos);
 				
 				// convert s
-				d = s.c_str();
-				sscanf(d, "%hi", &type);
-				entranceElement.y = (uint8_t)type;	
+				c = vals[1].c_str();
+				unsigned char type2;
+				//sscanf(c, "%hhu", &type2);
+				sscanf(c, "%hi", &type2);
+				entranceElement.direction = (uint8_t)type2;	
+				uint8_t dir_cpy = (uint8_t)type2;
+                //entranceElement.direction = entranceElement.direction & 0x7F;
 				
+				//s.erase(0, pos + 1);
+				//pos = s.find(',');
+			    //token = s.substr(0, pos);
 				
+				// convert s
+				c = vals[2].c_str();
+				short type3;
+				sscanf(c, "%hi", &type3);
+				//entranceElement.x = (int16_t)type3;	
+				entranceElement.x = (uint8_t)type3;	
+				
+				//s.erase(0, pos + 1);
+				//pos = s.find(',');
+			    //token = s.substr(0, pos);
+				
+				// convert s
+				c = vals[3].c_str();
+				short type4;
+				sscanf(c, "%hi", &type4);
+				//entranceElement.y = (int16_t)type4;	
+				entranceElement.y = (uint8_t)type4;	
+				
+                //entranceElement.isExit = dir_cpy >> 7;
 				
 				//entranceElement.z = (t6EntranceElement.z == -128) ? -1 : t6EntranceElement.z;
                 //entranceElement.direction = t6EntranceElement.direction & 0x7F;
@@ -414,10 +452,10 @@ namespace RCT2
 
             td->name = _name;*/
 
-			std::cout<<"T2:"<<td->type<<"\n";
+			//std::cout<<"T2:"<<td->type<<"\n";
 
             UpdateRideType(td);
-			std::cout<<"T3:"<<td->type<<"\n";
+			//std::cout<<"T3:"<<td->type<<"\n";
 
             return td;
         }

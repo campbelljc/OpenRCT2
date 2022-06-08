@@ -1,3 +1,4 @@
+
 /*****************************************************************************
  * Copyright (c) 2014-2020 OpenRCT2 developers
  *
@@ -1909,9 +1910,9 @@ static int32_t cc_track_refresh([[maybe_unused]] InteractiveConsole& console, [[
 static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
 {
 	/* WORK HERE */
-	track_repository_scan();
+/*	track_repository_scan();
 	// place the first track...
-    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport("/Applications/Games/RollerCoaster Tycoon 2.app/Contents/Resources/drive_c/Program Files/RollerCoaster Tycoon 2/Tracks/X.td9");
+    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport("/Applications/Games/RollerCoaster Tycoon 2.app/Contents/Resources/drive_c/Program Files/RollerCoaster Tycoon 2/Tracks/X_completed.td9");
 	
 	
 	//ScreenCoordsXY screenCoords = ScreenCoordsXY(0, 0);
@@ -1943,7 +1944,7 @@ static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[m
 	{
 	    auto surfaceElement = map_get_surface_element_at(mapCoords);
 	    auto mapZ = surfaceElement->GetBaseZ() + TrackDesignGetZPlacement(_trackDesign.get(), GetOrAllocateRide(_rideIndex), { mapCoords, surfaceElement->GetBaseZ() });
-		std::cout<<"mapz:"<<mapZ<<"\n";
+		//std::cout<<"mapz:"<<mapZ<<"\n";
 		
 	    trackLoc = { mapCoords, mapZ };
 		bool found = false;
@@ -2003,12 +2004,15 @@ static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[m
                 //window_close(wnd);
 				
 			    RideSetStatusAction gameAction = RideSetStatusAction(rideId, RideStatus::Open);
-				/*gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+				gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+					std::cout<<"CALLBACK\n";
+	                //ride_action_modify(getRide, RIDE_MODIFY_DEMOLISH, GAME_COMMAND_FLAG_APPLY);
 			        //if (result->Error == GameActions::Status::Ok)
 			        //{
 					//}
-				});*/
+				});
 			    GameActions::ExecuteNested(&gameAction);
+				
 				//while (getRide->ratings.Excitement == -1) { }
 				//std::cout<<"\nExcitement:"<<getRide->ratings.Excitement<<"\n";
 				
@@ -2027,7 +2031,7 @@ static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[m
 		    //OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::Error, result->Position);
 		}
     });
-    GameActions::Execute(&tdAction);
+    GameActions::Execute(&tdAction);*/
     //return;
     //}
 	//else
@@ -2035,6 +2039,40 @@ static int32_t cc_track_excite([[maybe_unused]] InteractiveConsole& console, [[m
 	//	std::cout<<"ERR3\n";
 	//}
 	
+}
+
+static int32_t cc_start_sock([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
+{
+    /*using namespace std::chrono_literals;
+
+    // initialize the zmq context with a single IO thread
+    zmq::context_t context{1};
+
+    // construct a REP (reply) socket and bind to interface
+    zmq::socket_t socket{context, zmq::socket_type::rep};
+    socket.bind("tcp://*:5555");
+
+    // prepare some static data for responses
+    const std::string data{"World"};
+
+    for (;;) 
+    {
+        zmq::message_t request;
+
+        // receive a request from client
+        socket.recv(request, zmq::recv_flags::none);
+        std::cout << "Received " << request.to_string() << std::endl;
+
+        // simulate work
+        //std::this_thread::sleep_for(1s);
+		cc_track_excite(console, argv);
+		
+		// destroy ride
+		
+        // send the reply to the client
+		std::cout << "Sending back.\n";
+        socket.send(zmq::buffer(data), zmq::send_flags::none);
+    }*/
 }
 
 using console_command_func = int32_t (*)(InteractiveConsole& console, const arguments_t& argv);
@@ -2147,6 +2185,7 @@ static constexpr const console_command console_command_table[] = {
     { "profiler_exportcsv", cc_profiler_exportcsv, "Exports the current profiler data.", "profiler_exportcsv <output file>" },
 	{ "track", cc_track_excite, "Excite1", "excite2"},
 	{ "tref", cc_track_refresh, "Refresh track repo", "refr1"},
+	{ "sock", cc_start_sock, "Socket", "sock"},
 };
 
 static int32_t cc_windows(InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)

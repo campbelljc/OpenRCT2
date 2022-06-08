@@ -182,9 +182,10 @@ static void ride_remove_cable_lift(Ride* ride)
  */
 void Ride::RemoveVehicles()
 {
-    if (lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK)
+    //if (lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK)
     {
-        lifecycle_flags &= ~RIDE_LIFECYCLE_ON_TRACK;
+		if (lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK)
+	        lifecycle_flags &= ~RIDE_LIFECYCLE_ON_TRACK;
         lifecycle_flags &= ~(RIDE_LIFECYCLE_TEST_IN_PROGRESS | RIDE_LIFECYCLE_HAS_STALLED_VEHICLE);
 
         for (size_t i = 0; i <= OpenRCT2::Limits::MaxTrainsPerRide; i++)

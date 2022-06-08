@@ -1,3 +1,11 @@
+#include <string>
+#include <fstream>
+
+inline bool exists_test0 (const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
 /*****************************************************************************
  * Copyright (c) 2014-2020 OpenRCT2 developers
  *
@@ -27,6 +35,7 @@
 #include "../platform/Platform.h"
 #include "../profiling/Profiling.h"
 #include "../rct12/RCT12.h"
+#include "../rct2/T6Exporter.h"
 #include "../scenario/Scenario.h"
 #include "../scripting/HookEngine.h"
 #include "../scripting/ScriptEngine.h"
@@ -51,9 +60,22 @@
 
 #include <algorithm>
 #include <iterator>
+#define ZMQ_BUILD_DRAFT_API
+#include <zmq.hpp>
+
 
 using namespace OpenRCT2::TrackMetaData;
 static bool vehicle_boat_is_location_accessible(const CoordsXYZ& location);
+
+using namespace std::chrono_literals;
+
+// initialize the zmq context with a single IO thread
+zmq::context_t context{1};
+
+// construct a REP (reply) socket and bind to interface
+zmq::socket_t socket{context, zmq::socket_type::client};
+
+
 
 constexpr int16_t VEHICLE_MAX_SPIN_SPEED = 1536;
 constexpr int16_t VEHICLE_MIN_SPIN_SPEED = -VEHICLE_MAX_SPIN_SPEED;
@@ -1788,6 +1810,8 @@ void Vehicle::UpdateMeasurements()
         }
     }
 
+	std::cout<< "X:"<<x<<", Y:"<<y <<", V:"<<velocity<<", A:"<<acceleration<<"\n";
+
     int32_t distance = ((velocity + acceleration) >> 10) * 42;
     if (distance < 0)
         return;
@@ -2276,7 +2300,7 @@ void Vehicle::UpdateWaitingForPassengers()
             }
 
             // any load: load=4 , full: load=3 , 3/4s: load=2 , half: load=1 , quarter: load=0
-            uint8_t load = curRide->depart_flags & RIDE_DEPART_WAIT_FOR_LOAD_MASK;
+            uint8_t load = 4; // curRide->depart_flags & RIDE_DEPART_WAIT_FOR_LOAD_MASK;
 
             // We want to wait for ceiling((load+1)/4 * num_seats_on_train) peeps, the +3 below is used instead of
             // ceil() to prevent issues on different cpus/platforms with floats. Note that vanilla RCT1/2 rounded
@@ -2440,12 +2464,13 @@ void Vehicle::UpdateWaitingToDepart()
     {
         if (curRide->depart_flags & RIDE_DEPART_SYNCHRONISE_WITH_ADJACENT_STATIONS)
         {
+			curRide->depart_flags &= RIDE_DEPART_SYNCHRONISE_WITH_ADJACENT_STATIONS;
             if (HasUpdateFlag(VEHICLE_UPDATE_FLAG_WAIT_ON_ADJACENT))
             {
                 if (!CanDepartSynchronised())
                 {
 					//std::cout<<"D5\n";
-                    return;
+                    //return;
                 }
             }
         }
@@ -2954,6 +2979,7 @@ static void test_finish(Ride& ride)
     totalTime = std::max(totalTime, 1u);
     ride.average_speed = ride.average_speed / totalTime;
     window_invalidate_by_number(WC_RIDE, ride.id.ToUnderlying());
+	
 }
 
 void Vehicle::UpdateTestFinish()
@@ -3090,6 +3116,79 @@ void Vehicle::UpdateDeparting()
     auto rideEntry = GetRideEntry();
     if (rideEntry == nullptr)
         return;
+	
+	
+	//std::cout <<"update departing\n";
+
+	if (!(curRide->lifecycle_flags & RIDE_LIFECYCLE_TESTED) || !ride_has_ratings(curRide) || exists_test0("exportX.td9"))
+	{
+		//std::cout<<"untested\n";
+		//continue;
+	}
+	else
+	{
+		// save track design *** WORK ***
+	    TrackDesignState tds{};
+
+	    //Ride* ride = get_ride(w->rideId);
+	    auto _trackDesign = curRide->SaveToTrackDesign(tds);
+	    if (!_trackDesign)
+	    {
+			//std::cout<<"cant get design\n";
+	        //return;
+	    }
+		else if (curRide->custom_name != "Test")
+		{
+			//std::cout<<"bad name:"<<curRide->custom_name<<"\n";
+		}
+		else
+		{
+		    //if (gTrackDesignSaveMode)
+		    //{
+	        auto errMessage = _trackDesign->CreateTrackDesignScenery(tds);
+	        if (errMessage != STR_NONE)
+	        {
+	            context_show_error(STR_CANT_SAVE_TRACK_DESIGN, errMessage, {});
+				std::cout<<"cant save1\n";
+	            return;
+	        }
+			//}
+			else
+			{
+			    char pathBuffer[100];
+			    std::string withExtension = "export.td6"; // Path::WithExtension(, "td6");
+			    String::Set(pathBuffer, sizeof(pathBuffer), withExtension.c_str());
+
+			    RCT2::T6Exporter t6Export{ _trackDesign.get() };
+
+			    auto success = t6Export.SaveTrack(pathBuffer);
+
+			    if (!success)
+			    {
+					std::cout<<"err saving\n";
+			    }
+				else
+				{
+					//std::cout<<"success\n";
+					socket.connect("tcp://localhost:5556");
+					const std::string data{"Done"};
+					socket.send(zmq::buffer(data), zmq::send_flags::none);
+					std::cout<<"Sent; excitement:"<< curRide->ratings.Excitement<<"\n";
+					socket.disconnect("tcp://localhost:5556");
+					curRide->lifecycle_flags &= RIDE_LIFECYCLE_TESTED;
+					curRide->custom_name = "Test done";
+					// delete ride
+				    //RideSetStatusAction gameAction = RideSetStatusAction(curRide->id, RideStatus::Closed);
+				    //GameActions::ExecuteNested(&gameAction);				
+					//return;
+					//map_remove_all_rides();
+				
+				}
+			}
+		}
+	}
+
+
 
     if (sub_state == 0)
     {
@@ -3314,6 +3413,10 @@ void Vehicle::UpdateDeparting()
     }
 
     FinishDeparting();
+	
+
+	
+	
 }
 
 /**
@@ -9574,6 +9677,9 @@ int32_t Vehicle::UpdateTrackMotion(int32_t* outStation)
     }
 
     vehicle->acceleration = curAcceleration;
+	
+	//std::cout<< "X:"<<_vehicleCurPosition.x<<", Y:"<<_vehicleCurPosition.y <<", V:"<<vehicle->velocity<<", A:"<<vehicle->acceleration<<"\n";
+	
 
     // hook_setreturnregisters(&regs);
     if (outStation != nullptr)

@@ -435,6 +435,7 @@ GameActions::Result TrackPlaceAction::Execute() const
     res.Position.x = _origin.x + 16;
     res.Position.y = _origin.y + 16;
     res.Position.z = _origin.z;
+	//std::cout<<res.Position.x<<","<<res.Position.y<<"\n";
 
     auto resultData = TrackPlaceActionResult{};
 

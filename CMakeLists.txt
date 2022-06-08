@@ -197,35 +197,9 @@ execute_process(
     ERROR_QUIET
 )
 
-
-if (NOT DISABLE_DISCORD_RPC)
-    if (UNIX AND NOT APPLE)
-        find_package(DiscordRPC)
-        if(${DISCORDRPC_FOUND})
-            set(HAVE_DISCORD_RPC TRUE)
-            add_definitions(-D__ENABLE_DISCORD__)
-            include_directories(DISCORDRPC_PROCESS_INCLUDES)
-        endif()
-    elseif (MACOS_USE_DEPENDENCIES)
-        find_package(discordrpc CONFIG REQUIRED)
-        if(${DISCORDRPC_FOUND})
-            add_definitions(-D__ENABLE_DISCORD__)
-            set(HAVE_DISCORD_RPC TRUE)
-            message("Building with libdiscord-rpc.dylib")
-        endif()
-    elseif(NOT HAVE_DISCORD_RPC AND EXISTS "${ROOT_DIR}/discord-rpc")
-        # Don't build discord's examples, some of which are in C and do not honour
-        # the flags we set for C++. Also we don't use the provided examples.
-        set(BUILD_EXAMPLES OFF CACHE BOOL "Build example apps")
-        add_subdirectory("${ROOT_DIR}/discord-rpc")
-        add_definitions(-D__ENABLE_DISCORD__)
-        include_directories("${ROOT_DIR}/discord-rpc/include")
-        set(HAVE_DISCORD_RPC TRUE)
-        message("Building with discord-rpc support")
-    else()
-        message("No discord-rpc detected, to enable clone discord-rpc to root directory: ${ROOT_DIR}")
-    endif()
-endif()
+find_package(libzmq) # CONFIG REQUIRED)
+set(HAVE_LIBZMQ TRUE)
+message("Building with libzmq.dylib")
 
 # ensure X86 and X86_64 are always initialized
 # may be overwritten below

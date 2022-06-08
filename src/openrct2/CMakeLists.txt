@@ -18,6 +18,7 @@ if (APPLE)
     set_source_files_properties(${OPENRCT2_CORE_MM_SOURCES} PROPERTIES COMPILE_FLAGS "-x objective-c++ -fmodules")
 endif ()
 
+
 if (ENABLE_SCRIPTING)
     include_directories("${CMAKE_CURRENT_LIST_DIR}/../thirdparty/duktape")
 
@@ -36,6 +37,11 @@ if (APPLE)
 endif ()
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 SET_CHECK_CXX_FLAGS(${PROJECT_NAME})
+
+
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "/opt/homebrew/include")
+include_directories("/opt/homebrew/include")
+target_link_libraries(${PROJECT_NAME} libzmq)
 
 # GCC / Clang likes us to pass the -lstdc++fs flag to link C++17 filesystem implementation.
 if (NOT MINGW AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
@@ -216,14 +222,8 @@ if (NOT DISABLE_TTF)
     endif ()
 endif ()
 
-if (HAVE_DISCORD_RPC)
-    if(${DISCORDRPC_FOUND})
-        target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${DISCORDRPC_INCLUDE_DIR})
-        target_link_libraries(${PROJECT_NAME} ${DISCORDRPC_LIBRARY})
-    else()
-        target_link_libraries(libopenrct2 discord-rpc)
-    endif()
-endif()
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${LIBZMQ_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} ${LIBZMQ_LIBRARY})
 
 # Includes
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${LIBZIP_INCLUDE_DIRS})
