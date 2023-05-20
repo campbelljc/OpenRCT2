@@ -92,7 +92,7 @@ GameActions::Result TrackDesignAction::Query() const
         return GameActions::Result(GameActions::Status::Unknown, STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE, STR_NONE);
     }
 
-    bool placeScenery = false;// true;
+    bool placeScenery = true; // ***SCEN*** false;// true;
 
     uint32_t flags = 0;
     if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
@@ -165,7 +165,7 @@ GameActions::Result TrackDesignAction::Execute() const
     }
 
     // Query first, this is required again to determine if scenery is available.
-    bool placeScenery = false; // true;
+    bool placeScenery = true; //***SCEN*** false; // true;
 
     uint32_t flags = 0;
     if (GetFlags() & GAME_COMMAND_FLAG_GHOST)

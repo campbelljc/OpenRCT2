@@ -1770,10 +1770,17 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                         auto res = flags & GAME_COMMAND_FLAG_APPLY ? GameActions::ExecuteNested(&rideEntranceExitPlaceAction)
                                                                    : GameActions::QueryNested(&rideEntranceExitPlaceAction);
 
-                        if (res.Error != GameActions::Status::Ok)
+                        while (res.Error != GameActions::Status::Ok)
                         {
+							newCoords.x += 1;
+							newCoords.y += 1;
+	                        auto rideEntranceExitPlaceAction2 = RideEntranceExitPlaceAction(
+	                            newCoords, rotation, ride->id, stationIndex, entrance.isExit);
+	                        rideEntranceExitPlaceAction2.SetFlags(flags);
+	                        res = flags & GAME_COMMAND_FLAG_APPLY ? GameActions::ExecuteNested(&rideEntranceExitPlaceAction2)
+	                                                                   : GameActions::QueryNested(&rideEntranceExitPlaceAction2);
 							std::cout<<"1773\n";
-                            return res;
+                            //return res;
                         }
                         totalCost += res.Cost;
                         tds.EntranceExitPlaced = true;
@@ -1787,11 +1794,19 @@ static GameActions::Result TrackDesignPlaceRide(TrackDesignState& tds, TrackDesi
                     newCoords.z += tds.Origin.z;
 
                     auto res = RideEntranceExitPlaceAction::TrackPlaceQuery(newCoords, false);
-                    if (res.Error != GameActions::Status::Ok)
+                    while (res.Error != GameActions::Status::Ok)
                     {
-						std::cout<<"1790\n";
-                        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
+						newCoords.x += 1;
+						newCoords.y += 1;
+						res = RideEntranceExitPlaceAction::TrackPlaceQuery(newCoords, false);
+						std::cout<<"1802\n";
                     }
+
+                    //if (res.Error != GameActions::Status::Ok)
+                    //{
+					//	std::cout<<"1790\n";
+                    //    return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
+                    //}
 
                     totalCost += res.Cost;
                     tds.EntranceExitPlaced = true;

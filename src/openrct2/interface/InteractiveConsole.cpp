@@ -2046,21 +2046,21 @@ static int32_t cc_start_sock([[maybe_unused]] InteractiveConsole& console, [[may
     /*using namespace std::chrono_literals;
 
     // initialize the zmq context with a single IO thread
-    zmq::context_t context{1};
+    //zmq::context_t context{1};
 
     // construct a REP (reply) socket and bind to interface
-    zmq::socket_t socket{context, zmq::socket_type::rep};
-    socket.bind("tcp://*:5555");
+    //zmq::socket_t socket{context, zmq::socket_type::rep};
+    //socket.bind("tcp://*:5555");
 
     // prepare some static data for responses
     const std::string data{"World"};
 
     for (;;) 
     {
-        zmq::message_t request;
+        //zmq::message_t request;
 
         // receive a request from client
-        socket.recv(request, zmq::recv_flags::none);
+        //socket.recv(request, zmq::recv_flags::none);
         std::cout << "Received " << request.to_string() << std::endl;
 
         // simulate work
@@ -2071,7 +2071,7 @@ static int32_t cc_start_sock([[maybe_unused]] InteractiveConsole& console, [[may
 		
         // send the reply to the client
 		std::cout << "Sending back.\n";
-        socket.send(zmq::buffer(data), zmq::send_flags::none);
+        //socket.send(zmq::buffer(data), zmq::send_flags::none);
     }*/
 }
 

@@ -243,8 +243,11 @@ namespace RCT2
 			bool isExit = false;
 			for (size_t j = ent; j < lines.size(); j ++)
 			{
+				ent = j;
 				if (lines[j] == "ENT")
 					continue;
+				if (lines[j] == "SCEN")
+					break;
                 TrackDesignEntranceElement entranceElement{};
                 
 				std::vector<std::string> vals = split(lines[j], ',');
@@ -311,7 +314,69 @@ namespace RCT2
 				isExit = !isExit;
                 td->entrance_elements.push_back(entranceElement);
 			}
-			
+			for (size_t j = ent; j < lines.size(); j ++)
+			{
+				if (lines[j] == "SCEN")
+					continue;
+				                
+				std::vector<std::string> vals = split(lines[j], ',');
+				
+                //TD6SceneryElement t6SceneryElement{};
+                //_stream.Read(&t6SceneryElement, sizeof(TD6SceneryElement));
+                TrackDesignSceneryElement sceneryElement{};
+                //sceneryElement.scenery_object = ObjectEntryDescriptor(t6SceneryElement.scenery_object);
+				
+				const char *c = vals[0].c_str();
+				unsigned char type;
+				sscanf(c, "%hhi", &type);				
+                sceneryElement.loc.x = (int8_t)type * COORDS_XY_STEP;
+				
+				c = vals[1].c_str();
+				unsigned char type2;
+				sscanf(c, "%hhi", &type2);
+                sceneryElement.loc.y = (int8_t)type2 * COORDS_XY_STEP;
+				
+				c = vals[2].c_str();
+				unsigned char type3;
+				sscanf(c, "%hhi", &type3);				
+                sceneryElement.loc.z = (int8_t)type3 * COORDS_Z_STEP;
+
+				c = vals[3].c_str();
+				unsigned char type4;
+				sscanf(c, "%hhi", &type4);				
+                sceneryElement.flags = (uint8_t)type4;
+				
+				rct_object_entry entry{};
+				c = vals[4].c_str();
+				unsigned char type5;
+				sscanf(c, "%hhi", &type5);				
+				entry.flags = (uint8_t)type5;
+				
+				if (vals[5][vals[5].size()-1] == ' ' || vals[5][vals[5].size()-1] == '\n')
+				{
+					vals[5].pop_back();
+				}
+				
+				entry.SetName(vals[5]);
+				//strcpy(entry.name, vals[5].c_str());
+				
+				std::cout<<"name:<"<<entry.GetName()<<">\n";
+				
+				sceneryElement.scenery_object = ObjectEntryDescriptor(entry);
+				
+                //sceneryElement.primary_colour = t6SceneryElement.primary_colour;
+                //sceneryElement.secondary_colour = t6SceneryElement.secondary_colour;
+                td->scenery_elements.push_back(std::move(sceneryElement));
+				
+				/*      rct_object_entry scenery_object; // 0x00 ? 
+				        int8_t x;                        // 0x10
+				        int8_t y;                        // 0x11
+				        int8_t z;                        // 0x12
+				        uint8_t flags;                   // 0x13 direction quadrant tertiary colour
+				        uint8_t primary_colour;          // 0x14
+				        uint8_t secondary_colour;        // 0x15
+				*/
+			}
 			
             td->vehicle_type = td6.vehicle_type;
 

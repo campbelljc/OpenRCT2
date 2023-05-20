@@ -50,7 +50,7 @@ namespace RCT2
 
     bool T6Exporter::SaveTrack(OpenRCT2::IStream* stream)
     {
-		/*
+		
         OpenRCT2::MemoryStream tempStream;
         tempStream.WriteValue<uint8_t>(OpenRCT2RideTypeToRCT2RideType(_trackDesign->type));
         tempStream.WriteValue<uint8_t>(_trackDesign->vehicle_type);
@@ -141,7 +141,7 @@ namespace RCT2
 
         SawyerChunkWriter sawyerCoding(stream);
         sawyerCoding.WriteChunkTrack(tempStream.GetData(), tempStream.GetLength());
-		*/
+		
 		
 		
 		
@@ -154,7 +154,8 @@ namespace RCT2
         myfile << static_cast<short>(_trackDesign->type) << "\n"; // 0x00
         myfile << static_cast<short>(_trackDesign->vehicle_type) << "\n";
 
-        myfile << static_cast<short>(_trackDesign->cost) << "\n";
+        myfile << static_cast<long int>(gCash) << "\n";
+	    gCash = 350000.00_GBP;
         myfile << static_cast<short>(_trackDesign->flags) << "\n";
         myfile << static_cast<short>(_trackDesign->ride_mode) << "\n";
         myfile << static_cast<short>(_trackDesign->track_flags) << "\n";

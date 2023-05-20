@@ -3128,6 +3128,7 @@ void Vehicle::UpdateDeparting()
 	else
 	{
 		// save track design *** WORK ***
+		//std::cout<<"3131\n";
 	    TrackDesignState tds{};
 
 	    //Ride* ride = get_ride(w->rideId);
@@ -3143,6 +3144,7 @@ void Vehicle::UpdateDeparting()
 		}
 		else
 		{
+			//std::cout<<"3146\n";
 		    //if (gTrackDesignSaveMode)
 		    //{
 	        auto errMessage = _trackDesign->CreateTrackDesignScenery(tds);
@@ -3173,7 +3175,7 @@ void Vehicle::UpdateDeparting()
 					socket.connect("tcp://localhost:5556");
 					const std::string data{"Done"};
 					socket.send(zmq::buffer(data), zmq::send_flags::none);
-					std::cout<<"Sent; excitement:"<< curRide->ratings.Excitement<<"\n";
+					std::cout<<"Sent; excitement:"<< curRide->ratings.Excitement<<", cash:"<<gCash<<"\n";
 					socket.disconnect("tcp://localhost:5556");
 					curRide->lifecycle_flags &= RIDE_LIFECYCLE_TESTED;
 					curRide->custom_name = "Test done";
@@ -3732,6 +3734,7 @@ void Vehicle::UpdateTravelling()
     }
 
     uint32_t curFlags = UpdateTrackMotion(nullptr);
+	//std::cout<<"V"<<velocity<<"A"<<acceleration<< " " <<std::flush;
 
     bool skipCheck = false;
     if (curFlags & (VEHICLE_UPDATE_MOTION_TRACK_FLAG_8 | VEHICLE_UPDATE_MOTION_TRACK_FLAG_9)

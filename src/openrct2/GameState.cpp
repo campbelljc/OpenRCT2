@@ -2,6 +2,7 @@
 #include <zmq.hpp>
 
 #include "ride/TrackDesignRepository.h"
+#include "actions/ClearAction.h"
 #include "actions/TrackDesignAction.h"
 #include "actions/RideSetStatusAction.h"
 #include "actions/RideDemolishAction.h"
@@ -290,6 +291,8 @@ void GameState::UpdateLogic(LogicTimings* timings)
     //const CoordsXY mapCoords = ViewportInteractionGetTileStartAtCursor(screenCoords);
 	//std::cout<<mapCoords.x<<","<<mapCoords.y<<"\n";
 	
+    gBankLoan = 0.00_GBP;
+	gResearchFundingLevel = 0;
 
     // receive a request from client
     auto num = socket_gs.recv(request, zmq::recv_flags::dontwait);
@@ -328,6 +331,19 @@ void GameState::UpdateLogic(LogicTimings* timings)
 			std::cout<<"R3\n";
 			//});				
 		    GameActions::ExecuteNested(&gameAction2);
+			
+
+
+		    ClearableItems itemsToClear = 0;
+	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_SMALL;
+	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_LARGE;
+	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_FOOTPATH;
+			
+			auto mapSizeMaxXY = GetMapSizeMaxXY();
+		    auto range = MapRange(0, 0, mapSizeMaxXY.x, mapSizeMaxXY.y);
+
+		    auto cAction = ClearAction(range, itemsToClear);
+			auto res = GameActions::Execute(&cAction);
 			
 			//ride_action_modify(&ride, RIDE_MODIFY_DEMOLISH, GAME_COMMAND_FLAG_APPLY);
         }
@@ -426,6 +442,7 @@ void GameState::UpdateLogic(LogicTimings* timings)
 				auto gameAction1 = RideSetStatusAction(ride->id, RideStatus::Closed);
 			    gameAction1.SetFlags(GAME_COMMAND_FLAG_APPLY);			
 			    GameActions::ExecuteNested(&gameAction1);
+				ride->custom_name = "Test done2";
 			}
 		}
 	}

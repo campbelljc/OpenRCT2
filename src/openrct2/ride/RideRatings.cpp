@@ -3611,28 +3611,50 @@ void ride_ratings_calculate_wooden_roller_coaster(Ride* ride, RideRatingUpdateSt
 
     RatingTuple ratings;
     ride_ratings_set(&ratings, RIDE_RATING(3, 20), RIDE_RATING(2, 60), RIDE_RATING(2, 00));
+	std::cout<<"1 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_length(&ratings, ride, 6000, 873);
+	std::cout<<"2 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_synchronisation(&ratings, ride, RIDE_RATING(0, 40), RIDE_RATING(0, 05));
+	std::cout<<"3 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_train_length(&ratings, ride, 187245);
+	std::cout<<"4 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_max_speed(&ratings, ride, 44281, 88562, 35424);
+	std::cout<<"5 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_average_speed(&ratings, ride, 364088, 655360);
+	std::cout<<"6 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_duration(&ratings, ride, 150, 26214);
+	std::cout<<"7 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_gforces(&ratings, ride, 40960, 34555, 49648);
+	std::cout<<"8 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_turns(&ratings, ride, 26749, 43458, 45749);
+	std::cout<<"9 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_drops(&ratings, ride, 40777, 46811, 49152);
+	std::cout<<"10 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_sheltered_ratings(&ratings, ride, 16705, 30583, 35108);
+	std::cout<<"11 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_proximity(state, &ratings, 22367);
+	std::cout<<"12 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_scenery(&ratings, ride, 11155);
+	std::cout<<"13 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_highest_drop_height_penalty(&ratings, ride, 12, 2, 2, 2);
+	std::cout<<"14 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_max_speed_penalty(&ratings, ride, 0xA0000, 2, 2, 2);
+	std::cout<<"15 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_max_negative_g_penalty(&ratings, ride, FIXED_2DP(0, 10), 2, 2, 2);
+	std::cout<<"16 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_first_length_penalty(&ratings, ride, 0x1720000, 2, 2, 2);
+	std::cout<<"17 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_num_drops_penalty(&ratings, ride, 2, 2, 2, 2);
+	std::cout<<"18 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
 
     ride_ratings_apply_excessive_lateral_g_penalty(&ratings, ride, 40960, 34555, 49648);
+	std::cout<<"19 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_intensity_penalty(&ratings);
+	std::cout<<"20 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
     ride_ratings_apply_adjustments(ride, &ratings);
+	std::cout<<"21 "<<ratings.Excitement<<" "<<ratings.Intensity<<" "<<ratings.Nausea<<"---";
 
+	std::cout<<"Speeds: avg: "<< ride->average_speed << "---max: " << ride->max_speed <<"---invs: "<<ride->inversions<<"---fsl:"<<ride->GetStation().SegmentLength<<"\n";
     ride->ratings = ratings;
 
     ride->upkeep_cost = ride_compute_upkeep(state, ride);

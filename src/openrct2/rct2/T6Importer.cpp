@@ -210,6 +210,7 @@ namespace RCT2
                 _stream.Read(&t6SceneryElement, sizeof(TD6SceneryElement));
                 TrackDesignSceneryElement sceneryElement{};
                 sceneryElement.scenery_object = ObjectEntryDescriptor(t6SceneryElement.scenery_object);
+				std::cout<<t6SceneryElement.x<<","<<t6SceneryElement.y<<","<<t6SceneryElement.z<<","<<t6SceneryElement.flags<<"---"<<t6SceneryElement.scenery_object.flags<<","<<t6SceneryElement.scenery_object.GetName()<<"\n";
                 sceneryElement.loc.x = t6SceneryElement.x * COORDS_XY_STEP;
                 sceneryElement.loc.y = t6SceneryElement.y * COORDS_XY_STEP;
                 sceneryElement.loc.z = t6SceneryElement.z * COORDS_Z_STEP;
@@ -281,7 +282,7 @@ namespace RCT2
             }*/
             myfile << static_cast<short>(td->flags2) << "\n";
             //myfile << static_cast<short>(td->vehicle_object) << "\n";
-            myfile << static_cast<short>(td6.vehicle_object.flags) << "\n";
+            myfile << static_cast<unsigned int>(td6.vehicle_object.flags) << "\n";
             //myfile << td->vehicle_object << "\n";
             myfile << static_cast<short>(td->space_required_x) << "\n";
             myfile << static_cast<short>(td->space_required_y) << "\n";
@@ -297,6 +298,11 @@ namespace RCT2
 			for(TrackDesignEntranceElement el : td->entrance_elements)
 			{
 				myfile<< static_cast<short>(el.z) <<","<<static_cast<short>(el.direction)<<","<<static_cast<short>(el.x)<<","<<static_cast<short>(el.y) << "\n";
+			}
+			myfile << "SCEN\n";
+			for(auto el : td->scenery_elements)
+			{
+				myfile<< static_cast<short>(el.loc.x/COORDS_XY_STEP) <<","<<static_cast<short>(el.loc.y/COORDS_XY_STEP)<<","<<static_cast<short>(el.loc.z/COORDS_Z_STEP)<<","<<static_cast<short>(el.flags)<<","<<static_cast<unsigned int>(el.scenery_object.Entry.flags)<<","<<el.scenery_object.Entry.GetName() << "\n";				
 			}
 			
 			myfile.close();

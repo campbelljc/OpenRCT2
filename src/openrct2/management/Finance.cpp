@@ -218,7 +218,7 @@ void finance_init()
     gInitialCash = 10000.00_GBP; // Cheat detection
 
     gCash = 10000.00_GBP;
-    gBankLoan = 10000.00_GBP;
+    gBankLoan = 0.00_GBP;
     gMaxBankLoan = 20000.00_GBP;
 
     gHistoricalProfit = 0;
