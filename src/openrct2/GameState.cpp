@@ -7,6 +7,8 @@
 #include "actions/RideSetStatusAction.h"
 #include "actions/RideDemolishAction.h"
 
+#include "json/json.h"
+
 /*****************************************************************************
  * Copyright (c) 2014-2020 OpenRCT2 developers
  *
@@ -298,139 +300,149 @@ void GameState::UpdateLogic(LogicTimings* timings)
     auto num = socket_gs.recv(request, zmq::recv_flags::dontwait);
 	if (num > 0)
 	{
-		std::string path = request.to_string();
-		const char* path_c = path.c_str();
-	    //std::cout << "Received " << path_c << std::endl;
-		
-		window_close_all();
-		
-        //for (auto& ride : GetRideManager())
-		if (!(createdRideID.IsNull()))
-        {
-			auto ride = get_ride(createdRideID);
-			std::cout<<"R1\n";
-			createdRideID = RideId::GetNull();
+		Json::Value res;
+		Json::Reader reader = {};
+		std::cout<<"received "<<request.to_string()<<"\n";
+		auto status = reader.parse(request.to_string(), res);
+        if (!status) {
+            std::cout <<"ConHash:: Error while parsing: " << reader.getFormattedErrorMessages().c_str() << std::endl;
+        } else {
+            std::cout<<"Successfully parsed !!" <<std::endl;
 			
-		    // close first...
-			auto gameAction1 = RideSetStatusAction(ride->id, RideStatus::Closed);
-		    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
-		    //});
-		    gameAction1.SetFlags(GAME_COMMAND_FLAG_APPLY);
-			
-		    GameActions::ExecuteNested(&gameAction1);
-			std::cout<<"R2\n";
-		    if (!(ride->lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK))
+			window_close_all();
+			if (res["action"] == "load_track")
 			{
-				ride->lifecycle_flags &= RIDE_LIFECYCLE_ON_TRACK;
-			}
-		    ride_clear_for_construction(ride);
-			
-			auto gameAction2 = RideDemolishAction(ride->id, RIDE_MODIFY_DEMOLISH);
-		    gameAction2.SetFlags(GAME_COMMAND_FLAG_APPLY);
-		    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
-			std::cout<<"R3\n";
-			//});				
-		    GameActions::ExecuteNested(&gameAction2);
-			
-
-
-		    ClearableItems itemsToClear = 0;
-	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_SMALL;
-	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_LARGE;
-	        itemsToClear |= CLEARABLE_ITEMS::SCENERY_FOOTPATH;
-			
-			auto mapSizeMaxXY = GetMapSizeMaxXY();
-		    auto range = MapRange(0, 0, mapSizeMaxXY.x, mapSizeMaxXY.y);
-
-		    auto cAction = ClearAction(range, itemsToClear);
-			auto res = GameActions::Execute(&cAction);
-			
-			//ride_action_modify(&ride, RIDE_MODIFY_DEMOLISH, GAME_COMMAND_FLAG_APPLY);
-        }
-		
-	    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport(path_c);
-		if (_trackDesign != nullptr)
-		{
-			_trackDesign->name = "Test";
-	
-			RideId _rideIndex{ RideId::GetNull() };
-		
-			auto _currentTrackPieceDirection = static_cast<Direction>(0);
-
-	
-			CoordsXYZ trackLoc;
-			GameActions::Result res;
-			bool found2 = false;
-			for (auto &mapCoords : possibleCoords)
-			{
-			    auto surfaceElement = map_get_surface_element_at(mapCoords);
-			    auto mapZ = surfaceElement->GetBaseZ() + TrackDesignGetZPlacement(_trackDesign.get(), GetOrAllocateRide(_rideIndex), { mapCoords, surfaceElement->GetBaseZ() });
-				//std::cout<<"mapz:"<<mapZ<<"\n";
-		
-			    trackLoc = { mapCoords, mapZ };
-				bool found = false;
-			    for (int32_t i2 = 0; i2 < 7; i2++, trackLoc.z += 8)
-			    {
-			        auto tdAction = TrackDesignAction(CoordsXYZD{ trackLoc.x, trackLoc.y, trackLoc.z, _currentTrackPieceDirection }, *_trackDesign);
-			        tdAction.SetFlags(0);
-			        res = GameActions::Query(&tdAction);
-
-			        // If successful don't keep trying.
-			        // If failure due to no money then increasing height only makes problem worse
-			        if (res.Error != GameActions::Status::Ok) // || res.Error == GameActions::Status::InsufficientFunds)
-			        {
-						std::cout<<"ERR1\n" << res.GetErrorMessage()<<"\n";
-			        }
-					else
-					{
-						found = true;
-						break;
-					}
-			    }
-				if (found)
-				{
-					found2 = true;
-					break;
-				}
-			}
-	
-			if (!found2)
-			{
-				std::cout<<"stopping\n";
-				return;
-			}
-			std::cout<<"Placing\n";
-		    auto tdAction = TrackDesignAction({ trackLoc, _currentTrackPieceDirection }, *_trackDesign);
-		    tdAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
-		        if (result->Error == GameActions::Status::Ok)
-		        {
-		            auto rideId = result->GetData<RideId>();
-		            auto getRide = get_ride(rideId);
-					createdRideID = rideId;
-		            if (getRide != nullptr)
-		            {
-		                //auto intent = Intent(WC_RIDE);
-		                //intent.putExtra(INTENT_EXTRA_RIDE_ID, rideId.ToUnderlying());
-		                //context_open_intent(&intent);
+				std::string path = res["path"].asString();
+				const char* path_c = path.c_str();
 				
-					    RideSetStatusAction gameAction = RideSetStatusAction(rideId, RideStatus::Open);
-						gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
-							std::cout<<"CALLBACK\n";
-						});
-					    GameActions::ExecuteNested(&gameAction);
-		            }
-		        }
-		        else
+				if (!(createdRideID.IsNull()))
 		        {
-					std::cout<<"ERR2\n";
-				}
-		    });
-		    res = GameActions::Execute(&tdAction);
+					auto ride = get_ride(createdRideID);
+					std::cout<<"R1\n";
+					createdRideID = RideId::GetNull();
+			
+				    // close first...
+					auto gameAction1 = RideSetStatusAction(ride->id, RideStatus::Closed);
+				    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+				    //});
+				    gameAction1.SetFlags(GAME_COMMAND_FLAG_APPLY);
+			
+				    GameActions::ExecuteNested(&gameAction1);
+					std::cout<<"R2\n";
+				    if (!(ride->lifecycle_flags & RIDE_LIFECYCLE_ON_TRACK))
+					{
+						ride->lifecycle_flags &= RIDE_LIFECYCLE_ON_TRACK;
+					}
+				    ride_clear_for_construction(ride);
+			
+					auto gameAction2 = RideDemolishAction(ride->id, RIDE_MODIFY_DEMOLISH);
+				    gameAction2.SetFlags(GAME_COMMAND_FLAG_APPLY);
+				    //gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+					std::cout<<"R3\n";
+					//});				
+				    GameActions::ExecuteNested(&gameAction2);
+			
+
+
+				    ClearableItems itemsToClear = 0;
+			        itemsToClear |= CLEARABLE_ITEMS::SCENERY_SMALL;
+			        itemsToClear |= CLEARABLE_ITEMS::SCENERY_LARGE;
+			        itemsToClear |= CLEARABLE_ITEMS::SCENERY_FOOTPATH;
+			
+					auto mapSizeMaxXY = GetMapSizeMaxXY();
+				    auto range = MapRange(0, 0, mapSizeMaxXY.x, mapSizeMaxXY.y);
+
+				    auto cAction = ClearAction(range, itemsToClear);
+					auto res = GameActions::Execute(&cAction);
+			
+					//ride_action_modify(&ride, RIDE_MODIFY_DEMOLISH, GAME_COMMAND_FLAG_APPLY);
+		        }
 		
-		    // send the reply to the client
-			//std::cout << "Sending back.\n";
-		    //socket.send(zmq::buffer(data), zmq::send_flags::none);
-		}
+			    std::unique_ptr<TrackDesign> _trackDesign = TrackDesignImport(path_c);
+				if (_trackDesign != nullptr)
+				{
+					_trackDesign->name = "Test";
+	
+					RideId _rideIndex{ RideId::GetNull() };
+		
+					auto _currentTrackPieceDirection = static_cast<Direction>(0);
+
+	
+					CoordsXYZ trackLoc;
+					GameActions::Result res;
+					bool found2 = false;
+					for (auto &mapCoords : possibleCoords)
+					{
+					    auto surfaceElement = map_get_surface_element_at(mapCoords);
+					    auto mapZ = surfaceElement->GetBaseZ() + TrackDesignGetZPlacement(_trackDesign.get(), GetOrAllocateRide(_rideIndex), { mapCoords, surfaceElement->GetBaseZ() });
+						//std::cout<<"mapz:"<<mapZ<<"\n";
+		
+					    trackLoc = { mapCoords, mapZ };
+						bool found = false;
+					    for (int32_t i2 = 0; i2 < 7; i2++, trackLoc.z += 8)
+					    {
+					        auto tdAction = TrackDesignAction(CoordsXYZD{ trackLoc.x, trackLoc.y, trackLoc.z, _currentTrackPieceDirection }, *_trackDesign);
+					        tdAction.SetFlags(0);
+					        res = GameActions::Query(&tdAction);
+
+					        // If successful don't keep trying.
+					        // If failure due to no money then increasing height only makes problem worse
+					        if (res.Error != GameActions::Status::Ok) // || res.Error == GameActions::Status::InsufficientFunds)
+					        {
+								std::cout<<"ERR1\n" << res.GetErrorMessage()<<"\n";
+					        }
+							else
+							{
+								found = true;
+								break;
+							}
+					    }
+						if (found)
+						{
+							found2 = true;
+							break;
+						}
+					}
+	
+					if (!found2)
+					{
+						std::cout<<"stopping\n";
+						return;
+					}
+					std::cout<<"Placing\n";
+				    auto tdAction = TrackDesignAction({ trackLoc, _currentTrackPieceDirection }, *_trackDesign);
+				    tdAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+				        if (result->Error == GameActions::Status::Ok)
+				        {
+				            auto rideId = result->GetData<RideId>();
+				            auto getRide = get_ride(rideId);
+							createdRideID = rideId;
+				            if (getRide != nullptr)
+				            {
+				                //auto intent = Intent(WC_RIDE);
+				                //intent.putExtra(INTENT_EXTRA_RIDE_ID, rideId.ToUnderlying());
+				                //context_open_intent(&intent);
+				
+							    RideSetStatusAction gameAction = RideSetStatusAction(rideId, RideStatus::Open);
+								gameAction.SetCallback([&](const GameAction*, const GameActions::Result* result) {
+									std::cout<<"CALLBACK\n";
+								});
+							    GameActions::ExecuteNested(&gameAction);
+				            }
+				        }
+				        else
+				        {
+							std::cout<<"ERR2\n";
+						}
+				    });
+				    res = GameActions::Execute(&tdAction);
+		
+				    // send the reply to the client
+					//std::cout << "Sending back.\n";
+				    //socket.send(zmq::buffer(data), zmq::send_flags::none);
+				}
+			}
+        }
 	}
 	else
 	{
